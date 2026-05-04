@@ -35,5 +35,6 @@ sequelize.sync({ alter: true }).then(() => {
   app.listen(PORT, () => console.log(`🚌 Shubha Yatra API running on port ${PORT}`));
 }).catch(err => {
   console.error('❌ DB connection error:', err.message);
+  console.error(err)
   process.exit(1);
 });

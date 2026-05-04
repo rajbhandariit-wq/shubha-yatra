@@ -21,7 +21,9 @@ export default function ProviderSchedules() {
       setSchedules(s.data.schedules||[]); setBuses(b.data.buses||[]); setRoutes(r.data.routes||[]);
     } catch { toast.error('Failed to load'); } finally { setLoading(false); }
   };
-  useEffect(load, []);
+  useEffect(() => {
+  load();
+}, []); 
 
   const handleRouteChange = (routeId) => {
     const r = routes.find(x => x.id === routeId);
