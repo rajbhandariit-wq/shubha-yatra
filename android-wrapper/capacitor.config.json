@@ -1,0 +1,19 @@
+﻿{
+  "appId": "com.shubhayatra.app",
+  "appName": "Shubha Yatra",
+  "webDir": "www",
+  "server": {
+    "url": "https://shubha-yatra.com",
+    "cleartext": false,
+    "androidScheme": "https",
+    "allowNavigation": [
+      "shubha-yatra.com"
+    ],
+    "iosScheme": "capacitor"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true,
+    "minWebViewVersion": 61
+  }
+}

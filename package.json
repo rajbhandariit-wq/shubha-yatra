@@ -1,0 +1,21 @@
+{
+  "name": "shubh_yatra_new",
+  "version": "1.0.0",
+  "description": "**Nepal's Premier Bus Ticket Reservation System**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rajbhandariit-wq/shubha-yatra.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/rajbhandariit-wq/shubha-yatra/issues"
+  },
+  "homepage": "https://github.com/rajbhandariit-wq/shubha-yatra#readme"
+}
