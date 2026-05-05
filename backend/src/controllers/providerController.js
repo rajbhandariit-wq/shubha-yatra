@@ -19,22 +19,43 @@ exports.getDashboard = async (req, res) => {
       include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }]
     });
 
+    const allSchedules = await Schedule.findAll({ where: { busId: { [Op.in]: busIds } }, attributes: ['id'] });
+    const scheduleIds = allSchedules.map(s => s.id);
+
+    const thirtyDaysLater = new Date();
+    thirtyDaysLater.setDate(thirtyDaysLater.getDate() + 30);
+    const thirtyDaysLaterStr = thirtyDaysLater.toISOString().split('T')[0];
+
     const upcomingBookings = await Booking.findAll({
       where: { bookingStatus: 'confirmed' },
       include: [{
         model: Schedule, as: 'schedule',
-        where: { busId: { [Op.in]: busIds }, travelDate: { [Op.gte]: today } },
+        where: { busId: { [Op.in]: busIds }, travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } },
         include: [{ model: Route, as: 'route' }]
       }, { model: User, as: 'customer', attributes: ['name', 'email', 'phone'] }],
       limit: 10, order: [[{ model: Schedule, as: 'schedule' }, 'travelDate', 'ASC']]
     });
 
-    const totalRevenue = await Booking.sum('totalAmount', {
-      where: { bookingStatus: { [Op.in]: ['confirmed', 'completed'] }, paymentStatus: 'paid' },
-      include: [{ model: Schedule, as: 'schedule', where: { busId: { [Op.in]: busIds } }, required: true }]
+    const upcomingBookingsCount = await Booking.count({
+      where: { bookingStatus: 'confirmed' },
+      include: [{
+        model: Schedule, as: 'schedule',
+        where: { busId: { [Op.in]: busIds }, travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } },
+        required: true
+      }]
     });
 
-    res.json({ todaySchedules, upcomingBookings, totalRevenue: totalRevenue || 0, activeBuses: buses.length, activeRoutes: routes.length });
+    const totalRevenue = scheduleIds.length > 0
+      ? await Booking.sum('totalAmount', {
+          where: {
+            scheduleId: { [Op.in]: scheduleIds },
+            bookingStatus: { [Op.in]: ['confirmed', 'completed'] },
+            paymentStatus: 'paid'
+          }
+        })
+      : 0;
+
+    res.json({ todaySchedules, upcomingBookings, upcomingBookingsCount, totalRevenue: totalRevenue || 0, activeBuses: buses.length, activeRoutes: routes.length });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

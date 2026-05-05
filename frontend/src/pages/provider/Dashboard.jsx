@@ -42,7 +42,7 @@ export default function ProviderDashboard() {
         <StatCard icon={TrendingUp} label="Total Revenue" value={`NPR ${(data?.totalRevenue || 0).toLocaleString()}`} color="border-green-600" sub="All time earnings" to="/provider/reports"/>
         <StatCard icon={Bus} label="Active Buses" value={data?.activeBuses || 0} color="border-blue-600" sub="Currently operating" to="/provider/buses"/>
         <StatCard icon={Route} label="Active Routes" value={data?.activeRoutes || 0} color="border-purple-600" sub="Available routes" to="/provider/routes"/>
-        <StatCard icon={BookOpen} label="Upcoming Bookings" value={data?.upcomingBookings?.length || 0} color="border-nepal-red" sub="Next 30 days" to="/provider/bookings"/>
+        <StatCard icon={BookOpen} label="Upcoming Bookings" value={data?.upcomingBookingsCount ?? 0} color="border-nepal-red" sub="Next 30 days" to="/provider/bookings"/>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
