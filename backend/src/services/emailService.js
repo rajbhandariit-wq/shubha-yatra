@@ -1,40 +1,14 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const QRCode = require('qrcode');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: {
-    rejectUnauthorized: false,
-  },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM = process.env.EMAIL_FROM || 'noreply@shubha-yatra.com';
 
-    const sendTicketEmail = async ({
-      to,
-      name,
-      ticketNumber,
-      route,
-      date,
-      departureTime,
-      seats = [],
-      amount,
-      passengers = []
-    }) => {
-      const passengerList = passengers.length
-      ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
-      : 'N/A';
-          const qrData = JSON.stringify({
-            ticketNumber,
-            route,
-            date,
-            departureTime,
-            passengers,});  
-      const qrCode = await QRCode.toDataURL(qrData);
+const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureTime, seats = [], amount, passengers = [] }) => {
+  const passengerList = passengers.length
+    ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
+    : 'N/A';
+  const qrCode = await QRCode.toDataURL(JSON.stringify({ ticketNumber, route, date, departureTime, passengers }));
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
@@ -51,20 +25,11 @@ const transporter = nodemailer.createTransport({
         <p>Dear <strong>${name}</strong>,</p>
         <p>Your ticket has been confirmed. Safe travels!</p>
         <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
-        
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Ticket No.</td><td style="padding:8px;">${ticketNumber}</td></tr>
           <tr><td style="padding:8px; font-weight:bold;">Route</td><td style="padding:8px;">${route}</td></tr>
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Date</td><td style="padding:8px;">${date}</td></tr>
-          <tr style="background:#f5f5f5;">
-          <td style="padding:8px; font-weight:bold;">Departure Time</td>
-          <td style="padding:8px;">${departureTime}</td>
-          </tr>
-          <tr style="background:#f5f5f5;">
-            <td style="padding:8px; font-weight:bold;">Passengers</td>
-            <td style="padding:8px;">
-              <div style="line-height:1.6;">${passengerList}</div>
-            </td>
-          </tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Departure Time</td><td style="padding:8px;">${departureTime}</td></tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Passengers</td><td style="padding:8px;"><div style="line-height:1.6;">${passengerList}</div></td></tr>
           <tr><td style="padding:8px; font-weight:bold;">Seats</td><td style="padding:8px;">${seats.join(', ')}</td></tr>
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Amount Paid</td><td style="padding:8px;">NPR ${amount}</td></tr>
         </table>
@@ -76,45 +41,40 @@ const transporter = nodemailer.createTransport({
     </div>`;
 
   try {
-    const info = await transporter.sendMail({
-      from: `"Shubha Yatra" <${process.env.EMAIL_FROM}>`,
-      to, subject: `🎫 Booking Confirmed - ${ticketNumber} | Shubha Yatra`, html
+    const { data, error } = await resend.emails.send({
+      from: `Shubha Yatra <${FROM}>`,
+      to, subject: `🎫 Booking Confirmed - ${ticketNumber} | Shubha Yatra`, html,
     });
-    console.log('📧 [MOCK EMAIL] Ticket sent to:', to, '| MessageId:', info.messageId);
-    return { success: true, messageId: info.messageId };
+    if (error) throw new Error(error.message);
+    console.log('📧 Ticket email sent to:', to, '| id:', data.id);
+    return { success: true, id: data.id };
   } catch (err) {
-  console.error('❌ Email failed:', err.message);
-  return { success: false, error: err.message };
-}
+    console.error('❌ Email failed:', err.message);
+    return { success: false, error: err.message };
+  }
 };
 
 const sendGenericEmail = async ({ to, subject, message }) => {
   try {
-    await transporter.sendMail({
-      from: `"Shubha Yatra" <${process.env.EMAIL_FROM || 'noreply@shubhayatra.com'}>`,
-      to, subject, text: message,
-      html: `<div style="font-family:Arial,sans-serif;padding:20px;border-left:4px solid #DC143C;"><h3 style="color:#DC143C;">Shubha Yatra 🚌</h3><p>${message}</p></div>`
+    const { error } = await resend.emails.send({
+      from: `Shubha Yatra <${FROM}>`,
+      to, subject,
+      html: `<div style="font-family:Arial,sans-serif;padding:20px;border-left:4px solid #DC143C;"><h3 style="color:#DC143C;">Shubha Yatra 🚌</h3><p>${message}</p></div>`,
     });
-    console.log('📧 [MOCK EMAIL] Generic email sent to:', to);
+    if (error) throw new Error(error.message);
+    console.log('📧 Generic email sent to:', to);
     return { success: true };
   } catch (err) {
-  console.error('❌ Email failed:', err.message);
-  return { success: false, error: err.message };
-}
+    console.error('❌ Email failed:', err.message);
+    return { success: false, error: err.message };
+  }
 };
 
-/**
- * Send password reset email
- */
 const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
-  // Make sure the URL is correct
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-  const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
-  
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
   console.log('Sending reset email to:', to);
   console.log('Reset URL:', resetUrl);
-  console.log('Reset token:', resetToken);
-  
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       <div style="background: #DC143C; padding: 20px; text-align: center; color: white;">
@@ -124,8 +84,7 @@ const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
         <p>Dear <strong>${name}</strong>,</p>
         <p>You requested to reset your password. Click the button below to reset it:</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${resetUrl}" 
-             style="background-color: #DC143C; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+          <a href="${resetUrl}" style="background-color: #DC143C; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
             Reset Password
           </a>
         </div>
@@ -136,30 +95,24 @@ const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
         <hr />
         <p style="color: #666; font-size: 12px;">Shubha Yatra - शुभ यात्रा</p>
       </div>
-    </div>
-  `;
-  
+    </div>`;
+
   try {
-    const info = await transporter.sendMail({
-      from: `"Shubha Yatra" <${process.env.EMAIL_FROM}>`,
-      to,
-      subject: '🔐 Reset Your Password - Shubha Yatra',
-      html,
+    const { data, error } = await resend.emails.send({
+      from: `Shubha Yatra <${FROM}>`,
+      to, subject: '🔐 Reset Your Password - Shubha Yatra', html,
     });
-    console.log('Reset email sent successfully. MessageId:', info.messageId);
+    if (error) throw new Error(error.message);
+    console.log('Reset email sent successfully. id:', data.id);
     return { success: true };
   } catch (err) {
-    console.error('Failed to send reset email:', err);
+    console.error('Failed to send reset email:', err.message);
     return { success: false, error: err.message };
   }
 };
 
-/**
- * Send password reset success email
- */
 const sendPasswordResetSuccessEmail = async ({ to, name }) => {
   const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/login`;
-  
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
       <div style="background: #28a745; padding: 20px; text-align: center; color: white;">
@@ -171,34 +124,23 @@ const sendPasswordResetSuccessEmail = async ({ to, name }) => {
         <p>If you made this change, no further action is required.</p>
         <p>If you did not make this change, please contact our support team immediately.</p>
         <div style="text-align: center; margin: 30px 0;">
-          <a href="${loginUrl}" 
-             style="background: #DC143C; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">
+          <a href="${loginUrl}" style="background: #DC143C; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">
             Login to Your Account
           </a>
         </div>
         <p>शुभ यात्रा! 🙏</p>
       </div>
-    </div>
-  `;
-  
+    </div>`;
+
   try {
-    await transporter.sendMail({
-      from: `"Shubha Yatra" <${process.env.EMAIL_FROM}>`,
-      to,
-      subject: '✅ Password Changed Successfully',
-      html,
+    const { error } = await resend.emails.send({
+      from: `Shubha Yatra <${FROM}>`,
+      to, subject: '✅ Password Changed Successfully', html,
     });
+    if (error) throw new Error(error.message);
   } catch (err) {
-    console.error('Failed to send success email:', err);
+    console.error('Failed to send success email:', err.message);
   }
 };
 
-// Add these to your module exports
-module.exports = { 
-  sendTicketEmail, 
-  sendGenericEmail,
-  sendPasswordResetEmail,
-  sendPasswordResetSuccessEmail,
-};
-
-
+module.exports = { sendTicketEmail, sendGenericEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail };
