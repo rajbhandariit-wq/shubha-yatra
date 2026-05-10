@@ -110,4 +110,44 @@ exports.getProviderReports = async (req, res) => {
     }));
     res.json({ reports });
   } catch (err) { res.status(500).json({ message: err.message }); }
+
+  
 };
+
+
+exports.getPendingProviders = async (req, res) => {
+    const providers = await User.findAll({
+      where: {
+        role: 'provider',
+        status: 'pending'
+      }
+    });
+
+    res.json(providers);
+  };
+
+  exports.approveProvider = async (req, res) => {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    if (!user || user.role !== 'provider') {
+      return res.status(404).json({ message: 'Provider not found' });
+    }
+
+    user.status = 'active';
+    await user.save();
+
+    res.json({ message: 'Provider approved successfully' });
+  };
+
+  exports.rejectProvider = async (req, res) => {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+
+    user.status = 'rejected';
+    await user.save();
+
+    res.json({ message: 'Provider rejected' });
+  };

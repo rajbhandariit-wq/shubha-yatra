@@ -4,10 +4,26 @@ import AdminLayout from '../../components/AdminLayout';
 import { adminAPI } from '../../services/api';
 import { Link } from 'react-router-dom';
 
+
 export default function AdminDashboard() {
+  const [pendingProviders, setPendingProviders] = useState([]);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  useEffect(() => { adminAPI.getDashboard().then(r => setData(r.data)).catch(console.error).finally(() => setLoading(false)); }, []);
+  useEffect(() => { adminAPI.getDashboard().then(r => setData(r.data)).catch(console.error).finally(() => setLoading(false)); 
+    adminAPI.getPendingProviders()
+    .then(r => setPendingProviders(r.data))
+    .catch(console.error);
+  }, []);
+
+  const handleApprove = async (id) => {
+    await adminAPI.approveProvider(id);
+    setPendingProviders(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleReject = async (id) => {
+    await adminAPI.rejectProvider(id);
+    setPendingProviders(prev => prev.filter(p => p.id !== id));
+  };
 
   const StatCard = ({ icon: Icon, label, value, color, bg, to }) => (
     <div className={`bg-white rounded-2xl p-5 border-l-4 ${color} shadow-sm`}>
@@ -30,6 +46,7 @@ export default function AdminDashboard() {
         <div className="w-14 h-14 bg-yellow-500 rounded-2xl flex items-center justify-center"><Shield className="h-8 w-8 text-white"/></div>
         <div>
           <h2 className="text-xl font-bold">Platform Overview</h2>
+          
           <p className="text-gray-300 text-sm">Shubha Yatra Super Admin Panel • {new Date().toLocaleDateString('en-NP', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</p>
         </div>
       </div>
@@ -66,6 +83,48 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+      </div>
+      {/* Pending Provider Approvals */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 mt-6">
+        <h3 className="font-bold text-gray-800 mb-4">
+          Pending Provider Approvals
+        </h3>
+
+        {pendingProviders.length === 0 ? (
+          <p className="text-sm text-gray-400">No pending providers</p>
+        ) : (
+          <div className="space-y-3">
+            {pendingProviders.map(p => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between border p-4 rounded-xl"
+              >
+                <div>
+                  <p className="font-semibold">{p.name}</p>
+                  <p className="text-xs text-gray-500">
+                    {p.email} • {p.companyName}
+                  </p>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleApprove(p.id)}
+                    className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    onClick={() => handleReject(p.id)}
+                    className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

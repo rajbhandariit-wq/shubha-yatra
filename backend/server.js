@@ -30,7 +30,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ alter: true }).then(() => {
+sequelize.sync({ alter: false }).then(() => {
   console.log('✅ Database synced');
   app.listen(PORT, () => console.log(`🚌 Shubha Yatra API running on port ${PORT}`));
 }).catch(err => {

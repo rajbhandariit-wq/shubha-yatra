@@ -84,6 +84,11 @@ export default function Login() {
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <div className="text-right mt-1">
+                <a href="/forgot-password" className="text-sm text-nepal-red hover:underline">
+                  Forgot Password?
+                </a>
+              </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
               {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"/> : <><LogIn className="h-4 w-4" /> Sign In</>}
@@ -96,7 +101,7 @@ export default function Login() {
             <div className="grid grid-cols-3 gap-2">
               {[['Customer','customer1@example.com','pass123','bg-green-50 border-green-200 text-green-700'],
                 ['Provider','provider1@shubhayatra.com','pass123','bg-blue-50 border-blue-200 text-blue-700'],
-                ['Admin','admin@shubhayatra.com','admin123','bg-yellow-50 border-yellow-200 text-yellow-700']].map(([role,email,pwd,cls]) => (
+                ['Admin','admin@shubhayatra.com','Admin@123','bg-yellow-50 border-yellow-200 text-yellow-700']].map(([role,email,pwd,cls]) => (
                 <button key={role} onClick={() => demoLogin(email, pwd)} className={`border rounded-xl p-2.5 text-xs text-center ${cls} hover:shadow transition-all`}>
                   <p className="font-bold">{role}</p><p className="opacity-70 mt-0.5 truncate">{email}</p>
                 </button>

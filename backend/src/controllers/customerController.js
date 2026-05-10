@@ -4,8 +4,10 @@ const { sendTicketEmail } = require('../services/emailService');
 const { sendTicketSMS } = require('../services/smsService');
 const { v4: uuidv4 } = require('uuid');
 
+
 // Generate ticket number
 const generateTicketNumber = () => `SY${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
 
 // Search buses
 exports.searchBuses = async (req, res) => {
@@ -20,7 +22,7 @@ exports.searchBuses = async (req, res) => {
         availableSeats: { [Op.gte]: parseInt(seats) }
       },
       include: [
-        { model: Bus, as: 'bus', where: { isActive: true }, include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName', 'phone'] }] },
+        { model: Bus, as: 'bus', where: { isActive: true }, include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName', 'phoneNumber'] }] },
         { model: Route, as: 'route', where: { source: { [Op.iLike]: source }, destination: { [Op.iLike]: destination }, isActive: true } }
       ],
       order: [['departureTime', 'ASC']]
@@ -75,8 +77,20 @@ exports.getSeats = async (req, res) => {
 // Create booking
 exports.createBooking = async (req, res) => {
   try {
-    const { scheduleId, seats, passengerDetails, paymentMethod, boardingPoint, droppingPoint } = req.body;
+    const isProviderBooking = req.user.role === 'provider';
+
+    if (isProviderBooking && req.user.role !== 'provider') {
+      return res.status(403).json({ message: 'Only providers can book on behalf of customers' });
+    }
+    const { scheduleId, seats, passengerDetails, paymentMethod, boardingPoint, droppingPoint,customerId,customerEmail,customerName,customerPhoneNumber } = req.body;
+        // Add validation
+    if (!passengerDetails || !Array.isArray(passengerDetails) || passengerDetails.length === 0) {
+      return res.status(400).json({ message: 'Passenger details are required' });
+    }
     
+    if (!seats || !Array.isArray(seats) || seats.length === 0) {
+      return res.status(400).json({ message: 'Seat selection is required' });
+    }
     const schedule = await Schedule.findByPk(scheduleId, {
       include: [
         { model: Bus, as: 'bus' },
@@ -99,7 +113,9 @@ exports.createBooking = async (req, res) => {
 
     const booking = await Booking.create({
       ticketNumber,
-      customerId: req.user.id,
+      customerId: isProviderBooking
+        ? null
+        : req.user.id,
       scheduleId,
       seats,
       passengerDetails,
@@ -109,7 +125,12 @@ exports.createBooking = async (req, res) => {
       paymentReference: `PAY-${uuidv4().substr(0, 8).toUpperCase()}`,
       bookingStatus: 'confirmed',
       boardingPoint,
-      droppingPoint
+      droppingPoint,
+      createdByRole: req.user.role,
+      createdBy: req.user.id,
+      customerName: passengerDetails?.[0]?.name || null,
+      customerPhone: req.body.customerPhone || null,
+      customerEmail: req.body.customerEmail || req.user.email,
     });
 
     // Update available seats
@@ -119,12 +140,30 @@ exports.createBooking = async (req, res) => {
     const route = schedule.route;
     const routeName = `${route.source} → ${route.destination}`;
     const dateStr = schedule.travelDate;
+    const departureTime = schedule.departureTime ? ` at ${schedule.departureTime}` : '';
 
-    if (req.user.email) {
-      sendTicketEmail({ to: req.user.email, name: req.user.name, ticketNumber, route: routeName, date: dateStr, seats, amount: totalAmount }).catch(console.error);
+    const email = isProviderBooking
+      ? req.body.customerEmail
+      : req.user.email;
+    const name = isProviderBooking ? customerName : req.user.name;
+    const phone = isProviderBooking
+      ? req.body.customerPhone
+      : req.user.phoneNumber;
+    if (email) {
+      sendTicketEmail({
+        to: email,
+        name: isProviderBooking ? passengerDetails?.[0]?.name : req.user.name,
+        ticketNumber,
+        route: routeName,
+        date: dateStr,
+        departureTime,
+        passengers: passengerDetails,
+        seats,
+        amount: totalAmount
+      }).catch(console.error);
     }
-    if (req.user.phone) {
-      sendTicketSMS({ phone: req.user.phone, ticketNumber, route: routeName, date: dateStr, seats }).catch(console.error);
+    if (phone) {
+      sendTicketSMS({ phone, ticketNumber, route: routeName, date: dateStr, departureTime, seats }).catch(console.error);
     }
 
     const fullBooking = await Booking.findByPk(booking.id, {
@@ -149,7 +188,7 @@ exports.getMyBookings = async (req, res) => {
       include: [{
         model: Schedule, as: 'schedule',
         include: [
-          { model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phone'] }] },
+          { model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] },
           { model: Route, as: 'route' }
         ]
       }],

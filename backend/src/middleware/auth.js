@@ -9,6 +9,14 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'shubha_yatra_secret');
     const user = await User.findByPk(decoded.id);
     if (!user || !user.isActive) return res.status(401).json({ message: 'User not found or inactive' });
+    if (
+      user.role === 'provider' &&
+      user.status !== 'active'
+    ) {
+      return res.status(403).json({
+        message: 'Your provider account is pending admin approval'
+      });
+    }
 
     req.user = user;
     next();

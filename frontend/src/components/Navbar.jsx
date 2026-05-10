@@ -9,6 +9,13 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+  const [showQuickSearch, setShowQuickSearch] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const [fromCity, setFromCity] = useState('Kathmandu');
+  const [toCity, setToCity] = useState('Pokhara');
+  const [travelDate, setTravelDate] = useState(today);
 
   const handleLogout = () => {
     logout();
@@ -42,7 +49,55 @@ export default function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <Link to="/" className="text-blue-100 hover:text-white text-sm font-medium transition-colors">Home</Link>
-            <Link to="/search" className="text-blue-100 hover:text-white text-sm font-medium transition-colors">Search Buses</Link>
+            
+            {/* Popular Destinations Button with relative positioning */}
+            <div className="relative">
+              <button
+                onClick={() => setShowQuickSearch(!showQuickSearch)}
+                className="text-blue-100 hover:text-white text-sm font-medium transition-colors"
+              >
+                Popular Destinations
+              </button>
+              
+              {/* Popular Destinations Dropdown - positioned relative to this div */}
+              {showQuickSearch && (
+                <div className="absolute top-full left-0 mt-2 z-50 bg-white rounded-xl shadow-2xl border border-gray-200 w-80">
+                  <div className="px-4 py-3">
+                    <div className="mb-3">
+                      <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                        Popular Destinations
+                      </h2>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      {[
+                        { from: 'Kathmandu', destination: 'Pokhara' },
+                        { from: 'Kathmandu', destination: 'Chitwan' },
+                        { from: 'Pokhara', destination: 'Lumbini' },
+                      ].map((route, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            const params = new URLSearchParams({
+                              source: route.from,
+                              destination: route.destination,
+                              date: travelDate,
+                            });
+
+                            navigate(`/search?${params.toString()}`);
+                            setShowQuickSearch(false);
+                          }}
+                          className="px-4 py-2 bg-gray-100 hover:bg-nepal-blue hover:text-white rounded-lg text-sm font-medium transition-all text-left"
+                        >
+                          {route.from} → {route.destination}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {!user && <>
               <Link to="/login" className="text-blue-100 hover:text-white text-sm font-medium transition-colors">Login</Link>
               <Link to="/register" className="bg-nepal-red hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Register</Link>
@@ -76,7 +131,7 @@ export default function Navbar() {
               </div>
             )}
           </div>
-
+          
           {/* Mobile hamburger */}
           <button className="md:hidden text-white p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -88,7 +143,12 @@ export default function Navbar() {
       {menuOpen && (
         <div className="md:hidden bg-nepal-blue border-t border-blue-700 px-4 py-4 space-y-3">
           <Link to="/" className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Home</Link>
-          <Link to="/search" className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Search Buses</Link>
+          <button
+            onClick={() => setShowQuickSearch(!showQuickSearch)}
+            className="block text-blue-100 hover:text-white py-2"
+          >
+            Popular Destinations
+          </button>
           {!user && <>
             <Link to="/login" className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Login</Link>
             <Link to="/register" className="block bg-nepal-red text-white px-4 py-2 rounded-lg text-center" onClick={() => setMenuOpen(false)}>Register</Link>
@@ -97,6 +157,45 @@ export default function Navbar() {
             <Link to={getDashboardLink()} className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
             <button onClick={handleLogout} className="block w-full text-left text-red-300 hover:text-red-100 py-2">Logout</button>
           </>}
+        </div>
+      )}
+      
+      {/* Mobile version of dropdown - shows when mobile menu is open and popular destinations is clicked */}
+      {menuOpen && showQuickSearch && (
+        <div className="md:hidden bg-white rounded-xl shadow-2xl border border-gray-200 mx-4 mt-2">
+          <div className="px-4 py-3">
+            <div className="mb-3">
+              <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+                Popular Destinations
+              </h2>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {[
+                { from: 'Kathmandu', destination: 'Pokhara' },
+                { from: 'Kathmandu', destination: 'Chitwan' },
+                { from: 'Pokhara', destination: 'Lumbini' },
+              ].map((route, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    const params = new URLSearchParams({
+                      source: route.from,
+                      destination: route.destination,
+                      date: travelDate,
+                    });
+
+                    navigate(`/search?${params.toString()}`);
+                    setShowQuickSearch(false);
+                    setMenuOpen(false);
+                  }}
+                  className="px-4 py-2 bg-gray-100 hover:bg-nepal-blue hover:text-white rounded-lg text-sm font-medium transition-all text-left"
+                >
+                  {route.from} → {route.destination}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </nav>

@@ -1,75 +1,129 @@
-const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-const generateToken = (user) => jwt.sign(
-  { id: user.id, email: user.email, role: user.role },
-  process.env.JWT_SECRET || 'shubha_yatra_secret',
-  { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-);
-
-exports.register = async (req, res) => {
-  try {
-    const { name, email, password, phone, role, companyName, companyAddress } = req.body;
-    if (!name || !email || !password) return res.status(400).json({ message: 'Name, email, and password are required' });
-    
-    const allowedRoles = ['customer', 'provider'];
-    const userRole = allowedRoles.includes(role) ? role : 'customer';
-    
-    const existing = await User.findOne({ where: { email } });
-    if (existing) return res.status(409).json({ message: 'Email already registered' });
-    
-    const user = await User.create({ name, email, password, phone, role: userRole, companyName, companyAddress });
-    const token = generateToken(user);
-    res.status(201).json({ message: 'Registration successful', token, user: user.toSafeObject() });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+// Generate JWT
+const generateToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_SECRET || 'secretkey', { expiresIn: '30d' });
 };
 
+// @desc    Login user
+// @route   POST /api/auth/login
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
+    
+    console.log('Login attempt for email:', email);
     
     const user = await User.findOne({ where: { email } });
-    if (!user || !user.isActive) return res.status(401).json({ message: 'Invalid credentials' });
     
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
     
-    const token = generateToken(user);
-    res.json({ message: 'Login successful', token, user: user.toSafeObject() });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const isPasswordValid = await user.comparePassword(password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+    
+    const token = generateToken(user.id);
+    
+    res.json({
+      success: true,
+      token,
+      user: user.toSafeObject(),
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 
-exports.getProfile = async (req, res) => {
+// @desc    Register user
+// @route   POST /api/auth/register
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, role, phoneNumber, companyName } = req.body;
+    
+    const existingUser = await User.findOne({ where: { email } });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: role || 'customer',
+      phoneNumber,
+      companyName: role === 'provider' ? companyName : null,
+      status: role === 'provider' ? 'pending' : 'active',
+    });
+    
+    const token = generateToken(user.id);
+    
+    res.status(201).json({
+      success: true,
+      token,
+      user: user.toSafeObject(),
+    });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get current user
+// @route   GET /api/auth/me
+exports.getMe = async (req, res) => {
   try {
     res.json({ user: req.user.toSafeObject() });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Get me error:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 
+// @desc    Update profile
+// @route   PUT /api/auth/profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, phone, companyName, companyAddress } = req.body;
-    await req.user.update({ name, phone, companyName, companyAddress });
-    res.json({ message: 'Profile updated', user: req.user.toSafeObject() });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+    const { name, phoneNumber, companyName, profileImage } = req.body;
+    
+    await req.user.update({
+      name: name || req.user.name,
+      phoneNumber: phoneNumber || req.user.phoneNumber,
+      companyName: companyName || req.user.companyName,
+      profileImage: profileImage || req.user.profileImage,
+    });
+    
+    res.json({ user: req.user.toSafeObject() });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 
+// @desc    Change password
+// @route   PUT /api/auth/change-password
 exports.changePassword = async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const isMatch = await req.user.comparePassword(currentPassword);
-    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
-    await req.user.update({ password: newPassword });
+    
+    const isPasswordValid = await req.user.comparePassword(currentPassword);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+    
+    req.user.password = newPassword;
+    await req.user.save();
+    
     res.json({ message: 'Password changed successfully' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    console.error('Change password error:', error);
+    res.status(500).json({ message: error.message });
   }
 };

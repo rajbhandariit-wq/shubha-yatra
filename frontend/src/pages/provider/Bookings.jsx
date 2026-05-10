@@ -43,7 +43,7 @@ export default function ProviderBookings() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
-                <tr>{['Ticket','Customer','Route','Date','Seats','Amount','Status'].map(h=><th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>)}</tr>
+                <tr>{['Ticket','Customer','Phone','Route','Date','Seats','Amount','Status'].map(h=><th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>)}</tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {bookings.map(b => (
@@ -52,6 +52,9 @@ export default function ProviderBookings() {
                     <td className="px-4 py-3">
                       <p className="font-medium">{b.customer?.name}</p>
                       <p className="text-xs text-gray-400">{b.customer?.email}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      {b.customer?.phoneNumber || '-'}
                     </td>
                     <td className="px-4 py-3"><div className="flex items-center gap-1 whitespace-nowrap">{b.schedule?.route?.source}<ArrowRight className="h-3 w-3"/>{b.schedule?.route?.destination}</div></td>
                     <td className="px-4 py-3 whitespace-nowrap">{b.schedule?.travelDate}</td>

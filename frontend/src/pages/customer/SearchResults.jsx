@@ -6,27 +6,51 @@ import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
+
 const AMENITY_ICONS = { WiFi: Wifi, AC: Wind, 'USB Charging': Zap };
+
 
 export default function SearchResults() {
   const [params] = useSearchParams();
+
+  const source = params.get('source') || '';
+  const destination = params.get('destination') || '';
+  const date = params.get('date') || new Date().toISOString().split('T')[0];
+  const seats = 1;
   const navigate = useNavigate();
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+ 
 
-  const source = params.get('source') || '';
-  const destination = params.get('destination') || '';
-  const date = params.get('date') || '';
-  const seats = params.get('seats') || 1;
 
-  useEffect(() => {
-    setLoading(true);
-    customerAPI.searchBuses({ source, destination, date, seats })
-      .then(r => setSchedules(r.data.schedules || []))
-      .catch(() => toast.error('Failed to fetch buses'))
-      .finally(() => setLoading(false));
-  }, [source, destination, date]);
+
+useEffect(() => {
+  if (!source || !destination) {
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+
+  customerAPI.searchBuses({
+    source,
+    destination,
+    date,
+    seats,
+  })
+    .then(r => {
+      setSchedules(r.data.schedules || []);
+    })
+    .catch(() => {
+      toast.error('Failed to fetch buses');
+      setSchedules([]);
+    })
+    .finally(() => {
+      setLoading(false);
+    });
+
+}, [source, destination, date]);
 
   const filtered = schedules.filter(s => filter === 'all' || s.bus?.type === filter);
 
@@ -105,7 +129,7 @@ export default function SearchResults() {
           <div className="flex items-center gap-3 text-xl font-bold mb-2">
             <MapPin className="h-5 w-5" />{source} <ArrowRight className="h-5 w-5" /> {destination}
           </div>
-          <p className="text-blue-200 text-sm">{new Date(date).toLocaleDateString('en-NP', {weekday:'long',year:'numeric',month:'long',day:'numeric'})} • {seats} seat(s) • {filtered.length} bus{filtered.length!==1?'es':''} found</p>
+          <p className="text-blue-200 text-sm">{new Date(date).toLocaleDateString('en-NP', {weekday:'long',year:'numeric',month:'long',day:'numeric'})} • {filtered.length} bus{filtered.length!==1?'es':''} found</p>
         </div>
       </div>
 

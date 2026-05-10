@@ -3,6 +3,7 @@ import { LayoutDashboard, Bus, Route, Users, BookOpen, MessageSquare, BarChart2,
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { Ticket } from "lucide-react";
 
 const links = [
   { to: '/provider', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -10,6 +11,7 @@ const links = [
   { to: '/provider/routes', icon: Route, label: 'Routes' },
   { to: '/provider/schedules', icon: Calendar, label: 'Schedules' },
   { to: '/provider/bookings', icon: BookOpen, label: 'Bookings' },
+  { to: '/provider/create-booking', icon: Ticket, label: 'Create Booking' },
   { to: '/provider/staff', icon: Users, label: 'Staff' },
   { to: '/provider/messaging', icon: MessageSquare, label: 'Messaging' },
   { to: '/provider/reports', icon: BarChart2, label: 'Reports' },
@@ -19,10 +21,10 @@ export default function ProviderLayout({ children, title }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const handleLogout = () => { logout(); toast.success('Logged out!'); navigate('/'); };
-
+  const isApproved = user?.status === 'active';
   const Sidebar = () => (
+    
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
@@ -34,11 +36,30 @@ export default function ProviderLayout({ children, title }) {
         </div>
       </div>
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {links.map(({ to, icon: Icon, label, exact }) => (
-          <NavLink key={to} to={to} end={exact} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-            <Icon className="h-5 w-5 shrink-0" /><span>{label}</span>
-          </NavLink>
-        ))}
+        {links.map(({ to, icon: Icon, label, exact }) => {
+          const blocked = !isApproved && (
+            to.includes('/buses') ||
+            to.includes('/routes') ||
+            to.includes('/schedules')
+          );
+
+          return (
+            <NavLink
+              key={to}
+              to={blocked ? '#' : to}
+              end={exact}
+              className={() =>
+                `sidebar-link ${blocked ? 'opacity-40 pointer-events-none' : ''}`
+              }
+            >
+              <Icon className="h-5 w-5 shrink-0" />
+              <span>{label}</span>
+              {!isApproved && blocked && (
+                <span className="text-xs text-yellow-400 ml-auto">Pending</span>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
       <div className="p-3 border-t border-white/10">
         <button onClick={handleLogout} className="sidebar-link w-full text-red-400 hover:text-red-300 hover:bg-red-500/10">

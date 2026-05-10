@@ -42,7 +42,8 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Quick Links</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
-              {[['/', 'Home'], ['/search', 'Search Buses'], ['/login', 'Login'], ['/register', 'Register']].map(([to, label]) => (
+              {[
+                ['/', 'Home'], [`/search?source=Kathmandu&destination=Pokhara&date=${new Date().toISOString().split('T')[0]}`, 'Search Buses'], ['/login', 'Login'], ['/register', 'Register']].map(([to, label]) => (
                 <li key={to}><Link to={to} className="hover:text-white transition-colors flex items-center gap-1.5">→ {label}</Link></li>
               ))}
             </ul>
@@ -53,7 +54,8 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Popular Routes</h3>
             <ul className="space-y-2 text-gray-400 text-sm">
               {[['Kathmandu', 'Pokhara'],['Kathmandu', 'Chitwan'],['Pokhara', 'Lumbini'],['Kathmandu', 'Birgunj'],['Pokhara', 'Biratnagar']].map(([src,dst]) => (
-                <li key={`${src}-${dst}`}><Link to={`/search?source=${src}&destination=${dst}`} className="hover:text-white transition-colors">→ {src} → {dst}</Link></li>
+                <li key={`${src}-${dst}`}><Link
+  to={`/search?source=${src}&destination=${dst}&date=${new Date().toISOString().split('T')[0]}`} className="hover:text-white transition-colors">→ {src} → {dst}</Link></li>
               ))}
             </ul>
           </div>

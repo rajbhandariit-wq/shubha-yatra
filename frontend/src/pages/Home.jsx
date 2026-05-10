@@ -7,10 +7,12 @@ import { customerAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const NEPAL_LANDMARKS = [
-  { name: 'Swayambhunath', subtitle: 'काठमाडौं', url: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=1920&q=80&fit=crop', credit: 'Kathmandu Valley' },
-  { name: 'Annapurna Range', subtitle: 'पोखरा', url: 'https://images.unsplash.com/photo-1516302752625-fcc3c50ae61f?w=1920&q=80&fit=crop', credit: 'Pokhara Region' },
-  { name: 'Lumbini', subtitle: 'लुम्बिनी', url: 'https://images.unsplash.com/photo-1571988887866-44e4383f91dd?w=1920&q=80&fit=crop', credit: 'Birthplace of Buddha' },
-  { name: 'Pashupatinath', subtitle: 'पशुपतिनाथ', url: 'https://images.unsplash.com/photo-1618002851728-f9b8bdb6ab5f?w=1920&q=80&fit=crop', credit: 'Sacred Temple' },
+  { name: 'Kathmandu', subtitle: 'काठमाडौं', url: '/images/indra-Jatra-1.jpg', credit: 'Kathmandu Valley' },
+  { name: 'Pokhara', subtitle: 'पोखरा', url: '/images/Annapurna.jpg', credit: 'Pokhara Region' },
+  { name: 'Lumbini', subtitle: 'लुम्बिनी', url: '/images/Lumbini.jpg', credit: 'Birthplace of Buddha' },
+  { name: 'Pashupatinath', subtitle: 'पशुपतिनाथ', url: '/images/Pashupatinath.jpg', credit: 'Sacred Temple' },
+  { name: 'Langtang', subtitle: 'लंगताङ', url: '/images/Langtang.jpg', credit: 'Trekking Region' },
+  { name: 'Swayambhu', subtitle: 'स्वयम्भु', url: '/images/Swayambhu.jpg', credit: 'Sacred Site' },
 ];
 
 const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalgunj','Dharan','Biratnagar','Janakpur','Bhairahawa','Birgunj','Hetauda','Dhangadhi','Illam','Tansen','Mustang'];
@@ -18,10 +20,18 @@ const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalg
 export default function Home() {
   const navigate = useNavigate();
   const [bgIdx, setBgIdx] = useState(0);
-  const [form, setForm] = useState({ source: '', destination: '', date: new Date().toISOString().split('T')[0], seats: 1 });
+  const [form, setForm] = useState({ source: '', destination: '', date: new Date().toISOString().split('T')[0],});
   const [popularRoutes, setPopularRoutes] = useState([]);
   const [srcSuggest, setSrcSuggest] = useState([]);
   const [dstSuggest, setDstSuggest] = useState([]);
+  const isValidCity = (city) => NEPAL_CITIES.includes(city);
+
+  const isSearchValid =
+    isValidCity(form.source) &&
+    isValidCity(form.destination) &&
+    form.source !== form.destination &&
+    form.source.trim() !== '' &&
+    form.destination.trim() !== '';
 
   // Rotate background
   useEffect(() => {
@@ -39,11 +49,11 @@ export default function Home() {
     e.preventDefault();
     if (!form.source || !form.destination) return toast.error('Please enter source and destination');
     if (form.source === form.destination) return toast.error('Source and destination cannot be same');
-    navigate(`/search?source=${encodeURIComponent(form.source)}&destination=${encodeURIComponent(form.destination)}&date=${form.date}&seats=${form.seats}`);
+    navigate(`/search?source=${encodeURIComponent(form.source)}&destination=${encodeURIComponent(form.destination)}&date=${form.date}`);
   };
 
   const landmark = NEPAL_LANDMARKS[bgIdx];
-
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -110,6 +120,9 @@ export default function Home() {
                     {srcSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f=>({...f,source:c})); setSrcSuggest([]); }}>{c}</button>)}
                   </div>
                 )}
+                {form.source && !isValidCity(form.source) && (
+                  <p className="text-xs text-red-500 mt-1">Invalid city</p>
+                )}
               </div>
               {/* Destination */}
               <div className="relative">
@@ -124,6 +137,9 @@ export default function Home() {
                     {dstSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f=>({...f,destination:c})); setDstSuggest([]); }}>{c}</button>)}
                   </div>
                 )}
+                {form.destination && !isValidCity(form.destination) && (
+                  <p className="text-xs text-red-500 mt-1">Invalid city</p>
+                )}
               </div>
               {/* Date */}
               <div>
@@ -134,7 +150,7 @@ export default function Home() {
                 </div>
               </div>
               {/* Seats + Button */}
-              <div>
+              {/* <div>
                 <label className="label text-gray-700">Seats • सिट</label>
                 <div className="flex gap-2">
                   <div className="relative w-24">
@@ -143,10 +159,27 @@ export default function Home() {
                       {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </div>
-                  <button type="submit" className="btn-primary flex-1 flex items-center justify-center gap-2 text-sm whitespace-nowrap">
-                    <Search className="h-4 w-4" /> Search
-                  </button>
+                    <button
+                      type="submit"
+                      disabled={!isSearchValid}
+                      className={`btn-primary flex-1 flex items-center justify-center gap-2 text-sm whitespace-nowrap
+                        ${!isSearchValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      <Search className="h-4 w-4" />
+                      Search
+                    </button>
                 </div>
+              </div> */}
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={!isSearchValid}
+                  className={`btn-primary w-full flex items-center justify-center gap-2 text-sm h-[42px]
+                    ${!isSearchValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <Search className="h-4 w-4" />
+                  Search
+                </button>
               </div>
             </div>
           </form>
@@ -199,7 +232,7 @@ export default function Home() {
               {source:'Pokhara',destination:'Lumbini',fare:700},{source:'Kathmandu',destination:'Birgunj',fare:750},
               {source:'Pokhara',destination:'Biratnagar',fare:1500},{source:'Kathmandu',destination:'Nepalgunj',fare:1200},
             ]).map((r, i) => (
-              <button key={i} onClick={() => navigate(`/search?source=${r.source}&destination=${r.destination}&date=${form.date}&seats=1`)}
+              <button key={i} onClick={() => navigate(`/search?source=${r.source}&destination=${r.destination}&date=${form.date}`)}
                 className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-400 hover:shadow-md transition-all group text-left">
                 <div>
                   <div className="flex items-center gap-2 text-gray-800 font-semibold">

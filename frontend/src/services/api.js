@@ -32,6 +32,11 @@ export const authAPI = {
   getProfile: () => api.get('/auth/me'),
   updateProfile: (data) => api.put('/auth/profile', data),
   changePassword: (data) => api.put('/auth/change-password', data),
+  // Auth API - add these methods
+  forgotPassword: (data) => api.post('/auth/forgot-password', data),
+  verifyResetToken: (token) => api.get(`/auth/reset-password/${token}`),
+  resetPassword: (token, data) => api.post(`/auth/reset-password/${token}`, data),
+
 };
 
 // Customer
@@ -74,6 +79,11 @@ export const providerAPI = {
   getNotifications: () => api.get('/provider/messages'),
   // Reports
   getReports: (params) => api.get('/provider/reports', { params }),
+  searchSchedules: (params) => api.get('/provider/schedules/search', { params }),
+  
+  getSeatLayout: (scheduleId) => api.get(`/provider/schedules/${scheduleId}/seats`),
+  
+  createBooking: (data) => api.post('/provider/bookings/create', data),
 };
 
 // Admin
@@ -86,4 +96,9 @@ export const adminAPI = {
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
   getCustomerReports: () => api.get('/admin/reports/customers'),
   getProviderReports: () => api.get('/admin/reports/providers'),
+  getPendingProviders: () => api.get('/admin/providers/pending'),
+  approveProvider: (id) => api.put(`/admin/providers/${id}/approve`),
+  rejectProvider: (id) => api.put(`/admin/providers/${id}/reject`),
 };
+
+

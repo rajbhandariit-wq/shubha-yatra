@@ -29,18 +29,31 @@ exports.getDashboard = async (req, res) => {
     const upcomingBookings = await Booking.findAll({
       where: { bookingStatus: 'confirmed' },
       include: [{
-        model: Schedule, as: 'schedule',
-        where: { busId: { [Op.in]: busIds }, travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } },
+        model: Schedule, 
+        as: 'schedule',
+        where: { 
+          busId: { [Op.in]: busIds }, 
+          travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } 
+        },
         include: [{ model: Route, as: 'route' }]
-      }, { model: User, as: 'customer', attributes: ['name', 'email', 'phone'] }],
-      limit: 10, order: [[{ model: Schedule, as: 'schedule' }, 'travelDate', 'ASC']]
+      }, { 
+        model: User, 
+        as: 'customer', 
+        attributes: ['id', 'name', 'email', 'phoneNumber']
+      }],
+      limit: 10,
+      order: [[{ model: Schedule, as: 'schedule' }, 'travelDate', 'ASC']]
     });
 
     const upcomingBookingsCount = await Booking.count({
       where: { bookingStatus: 'confirmed' },
       include: [{
-        model: Schedule, as: 'schedule',
-        where: { busId: { [Op.in]: busIds }, travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } },
+        model: Schedule, 
+        as: 'schedule',
+        where: { 
+          busId: { [Op.in]: busIds }, 
+          travelDate: { [Op.gte]: today, [Op.lte]: thirtyDaysLaterStr } 
+        },
         required: true
       }]
     });
@@ -55,8 +68,16 @@ exports.getDashboard = async (req, res) => {
         })
       : 0;
 
-    res.json({ todaySchedules, upcomingBookings, upcomingBookingsCount, totalRevenue: totalRevenue || 0, activeBuses: buses.length, activeRoutes: routes.length });
+    res.json({ 
+      todaySchedules, 
+      upcomingBookings, 
+      upcomingBookingsCount, 
+      totalRevenue: totalRevenue || 0, 
+      activeBuses: buses.length, 
+      activeRoutes: routes.length 
+    });
   } catch (err) {
+    console.error('Dashboard error:', err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -66,7 +87,9 @@ exports.getBuses = async (req, res) => {
   try {
     const buses = await Bus.findAll({ where: { providerId: req.user.id }, order: [['createdAt', 'DESC']] });
     res.json({ buses });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.createBus = async (req, res) => {
@@ -74,7 +97,9 @@ exports.createBus = async (req, res) => {
     const { name, registrationNumber, type, totalSeats, seatLayout, amenities } = req.body;
     const bus = await Bus.create({ providerId: req.user.id, name, registrationNumber, type, totalSeats, seatLayout, amenities });
     res.status(201).json({ message: 'Bus added successfully', bus });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.updateBus = async (req, res) => {
@@ -83,7 +108,9 @@ exports.updateBus = async (req, res) => {
     if (!bus) return res.status(404).json({ message: 'Bus not found' });
     await bus.update(req.body);
     res.json({ message: 'Bus updated', bus });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.deleteBus = async (req, res) => {
@@ -92,7 +119,9 @@ exports.deleteBus = async (req, res) => {
     if (!bus) return res.status(404).json({ message: 'Bus not found' });
     await bus.update({ isActive: false });
     res.json({ message: 'Bus deactivated' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ ROUTE MANAGEMENT ============
@@ -100,7 +129,9 @@ exports.getRoutes = async (req, res) => {
   try {
     const routes = await Route.findAll({ where: { providerId: req.user.id }, order: [['createdAt', 'DESC']] });
     res.json({ routes });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.createRoute = async (req, res) => {
@@ -108,7 +139,9 @@ exports.createRoute = async (req, res) => {
     const { source, destination, distance, estimatedDuration, fare, departureTime, arrivalTime, stops, daysOfWeek } = req.body;
     const route = await Route.create({ providerId: req.user.id, source, destination, distance, estimatedDuration, fare, departureTime, arrivalTime, stops, daysOfWeek });
     res.status(201).json({ message: 'Route created', route });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.updateRoute = async (req, res) => {
@@ -117,7 +150,9 @@ exports.updateRoute = async (req, res) => {
     if (!route) return res.status(404).json({ message: 'Route not found' });
     await route.update(req.body);
     res.json({ message: 'Route updated', route });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.deleteRoute = async (req, res) => {
@@ -126,7 +161,9 @@ exports.deleteRoute = async (req, res) => {
     if (!route) return res.status(404).json({ message: 'Route not found' });
     await route.update({ isActive: false });
     res.json({ message: 'Route deactivated' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ SCHEDULE MANAGEMENT ============
@@ -137,7 +174,9 @@ exports.createSchedule = async (req, res) => {
     if (!bus) return res.status(404).json({ message: 'Bus not found' });
     const schedule = await Schedule.create({ busId, routeId, travelDate, departureTime, arrivalTime, fare, availableSeats: bus.totalSeats });
     res.status(201).json({ message: 'Schedule created', schedule });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.getSchedules = async (req, res) => {
@@ -150,7 +189,9 @@ exports.getSchedules = async (req, res) => {
       order: [['travelDate', 'DESC'], ['departureTime', 'ASC']]
     });
     res.json({ schedules });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ BOOKINGS ============
@@ -171,13 +212,16 @@ exports.getBookings = async (req, res) => {
       where: bookingWhere,
       include: [
         { model: Schedule, as: 'schedule', where: scheduleWhere, include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] },
-        { model: User, as: 'customer', attributes: ['name', 'email', 'phone'] }
+        { model: User, as: 'customer', attributes: ['name', 'email', 'phoneNumber'] }
       ],
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit)
+      limit: parseInt(limit), 
+      offset: (parseInt(page) - 1) * parseInt(limit)
     });
     res.json({ bookings: bookings.rows, total: bookings.count });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ STAFF ============
@@ -185,14 +229,18 @@ exports.getStaff = async (req, res) => {
   try {
     const staff = await Staff.findAll({ where: { providerId: req.user.id }, order: [['name', 'ASC']] });
     res.json({ staff });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.createStaff = async (req, res) => {
   try {
     const staff = await Staff.create({ ...req.body, providerId: req.user.id });
     res.status(201).json({ message: 'Staff added', staff });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.updateStaff = async (req, res) => {
@@ -201,7 +249,9 @@ exports.updateStaff = async (req, res) => {
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
     await staff.update(req.body);
     res.json({ message: 'Staff updated', staff });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.deleteStaff = async (req, res) => {
@@ -210,7 +260,9 @@ exports.deleteStaff = async (req, res) => {
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
     await staff.update({ isActive: false });
     res.json({ message: 'Staff deactivated' });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ MESSAGING ============
@@ -224,9 +276,9 @@ exports.sendMessage = async (req, res) => {
     if (scheduleId) {
       const bookings = await Booking.findAll({
         where: { scheduleId, bookingStatus: { [Op.in]: ['confirmed'] } },
-        include: [{ model: User, as: 'customer', attributes: ['name', 'email', 'phone'] }]
+        include: [{ model: User, as: 'customer', attributes: ['name', 'email', 'phoneNumber'] }]
       });
-      recipients = bookings.map(b => ({ name: b.customer.name, email: b.customer.email, phone: b.customer.phone }));
+      recipients = bookings.map(b => ({ name: b.customer.name, email: b.customer.email, phoneNumber: b.customer.phoneNumber }));
     }
 
     if (type === 'Email' || type === 'Both') {
@@ -235,25 +287,29 @@ exports.sendMessage = async (req, res) => {
       }
     }
     if (type === 'SMS' || type === 'Both') {
-      const phones = recipients.filter(r => r.phone).map(r => r.phone);
+      const phones = recipients.filter(r => r.phoneNumber).map(r => r.phoneNumber);
       if (phones.length > 0) sendAlertSMS({ phones, message }).catch(console.error);
     }
 
     const notification = await Notification.create({
       senderId: req.user.id, type, subject, message,
-      recipients: recipients.map(r => ({ email: r.email, phone: r.phone })),
+      recipients: recipients.map(r => ({ email: r.email, phoneNumber: r.phoneNumber })),
       scheduleId: scheduleId || null, status: 'sent'
     });
 
     res.json({ message: `Message sent to ${recipients.length} recipients`, notification });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 exports.getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.findAll({ where: { senderId: req.user.id }, order: [['createdAt', 'DESC']], limit: 50 });
     res.json({ notifications });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
 };
 
 // ============ REPORTS ============
@@ -295,5 +351,274 @@ exports.getReports = async (req, res) => {
     const totalBookings = salesByBus.reduce((sum, b) => sum + b.bookings, 0);
 
     res.json({ salesByBus, salesByRoute, totalRevenue, totalBookings });
-  } catch (err) { res.status(500).json({ message: err.message }); }
+  } catch (err) { 
+    res.status(500).json({ message: err.message }); 
+  }
+
+};
+
+// Add these functions to your providerController.js (before the module.exports)
+
+// ============ ADD THESE MISSING FUNCTIONS ============
+
+// Search schedules for manual booking
+exports.searchSchedules = async (req, res) => {
+  try {
+    const { source, destination, date } = req.query;
+    const providerId = req.user.id;
+
+    if (!source || !destination || !date) {
+      return res.status(400).json({ message: 'Source, destination, and date are required' });
+    }
+
+    // Get provider's buses
+    const buses = await Bus.findAll({ 
+      where: { providerId, isActive: true },
+      attributes: ['id']
+    });
+    const busIds = buses.map(b => b.id);
+
+    if (busIds.length === 0) {
+      return res.json({ schedules: [] });
+    }
+
+    // Find schedules
+    const schedules = await Schedule.findAll({
+      where: {
+        busId: { [Op.in]: busIds },
+        travelDate: date,
+        availableSeats: { [Op.gt]: 0 }
+      },
+      include: [
+        { 
+          model: Bus, 
+          as: 'bus',
+          where: { isActive: true }
+        },
+        { 
+          model: Route, 
+          as: 'route',
+          where: {
+            source: { [Op.iLike]: source },
+            destination: { [Op.iLike]: destination },
+            isActive: true
+          }
+        }
+      ],
+      order: [['departureTime', 'ASC']]
+    });
+
+    res.json({ schedules });
+  } catch (err) {
+    console.error('Search schedules error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get seat layout for a schedule
+exports.getSeatLayout = async (req, res) => {
+  try {
+    const { scheduleId } = req.params;
+    const providerId = req.user.id;
+
+    // Verify schedule belongs to provider
+    const schedule = await Schedule.findByPk(scheduleId, {
+      include: [
+        { 
+          model: Bus, 
+          as: 'bus',
+          where: { providerId }
+        },
+        { model: Route, as: 'route' }
+      ]
+    });
+
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule not found' });
+    }
+
+    // Get booked seats
+    const bookings = await Booking.findAll({
+      where: { 
+        scheduleId, 
+        bookingStatus: { [Op.in]: ['confirmed', 'pending'] }
+      },
+      attributes: ['seats']
+    });
+
+    const bookedSeats = bookings.flatMap(b => b.seats);
+
+    // Generate seat layout
+    const bus = schedule.bus;
+    const totalSeats = bus.totalSeats;
+    const layout = bus.seatLayout || { rows: 10, seatsPerRow: 4 };
+
+    const seats = [];
+    for (let i = 1; i <= totalSeats; i++) {
+      seats.push({
+        number: i,
+        status: bookedSeats.includes(i) ? 'booked' : 'available'
+      });
+    }
+
+    res.json({ 
+      schedule, 
+      seats, 
+      bookedSeats, 
+      layout,
+      fare: schedule.fare 
+    });
+  } catch (err) {
+    console.error('Get seat layout error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Create manual booking (by provider/admin)
+exports.createManualBooking = async (req, res) => {
+  try {
+    const { 
+      scheduleId, 
+      seats, 
+      passengerDetails, 
+      paymentMethod, 
+      boardingPoint, 
+      droppingPoint,
+      customerEmail,
+      customerName,
+      customerPhone
+    } = req.body;
+
+    // Validate required fields
+    if (!scheduleId) {
+      return res.status(400).json({ message: 'Schedule ID is required' });
+    }
+
+    if (!seats || !Array.isArray(seats) || seats.length === 0) {
+      return res.status(400).json({ message: 'At least one seat is required' });
+    }
+
+    if (!passengerDetails || !Array.isArray(passengerDetails) || passengerDetails.length === 0) {
+      return res.status(400).json({ message: 'Passenger details are required' });
+    }
+
+    if (seats.length !== passengerDetails.length) {
+      return res.status(400).json({ message: 'Number of seats and passengers do not match' });
+    }
+
+    // Get schedule with bus info
+    const schedule = await Schedule.findByPk(scheduleId, {
+      include: [
+        { 
+          model: Bus, 
+          as: 'bus',
+          where: { providerId: req.user.id }
+        },
+        { model: Route, as: 'route' }
+      ]
+    });
+
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule not found' });
+    }
+
+    // Check seat availability
+    const existingBookings = await Booking.findAll({
+      where: { 
+        scheduleId, 
+        bookingStatus: { [Op.in]: ['confirmed', 'pending'] }
+      }
+    });
+
+    const bookedSeats = existingBookings.flatMap(b => b.seats);
+    const conflictSeats = seats.filter(s => bookedSeats.includes(s));
+
+    if (conflictSeats.length > 0) {
+      return res.status(409).json({ 
+        message: `Seats ${conflictSeats.join(', ')} are already booked` 
+      });
+    }
+
+    // Calculate total amount
+    const totalAmount = parseFloat(schedule.fare) * seats.length;
+
+    // Generate ticket number
+    const ticketNumber = `SY${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
+    // Find or create customer
+    let customerId = req.body.customerId;
+    
+    if (!customerId && customerEmail) {
+      // Try to find existing user by email
+      let customer = await User.findOne({ 
+        where: { email: customerEmail, role: 'customer' }
+      });
+      
+      if (!customer && customerName && customerEmail) {
+        // Create a new customer if not exists
+        customer = await User.create({
+          name: customerName,
+          email: customerEmail,
+          phoneNumber: customerPhone,
+          role: 'customer',
+          status: 'active',
+          password: Math.random().toString(36).substring(2, 10) // Random password
+        });
+      }
+      
+      if (customer) {
+        customerId = customer.id;
+      }
+    }
+
+    // Create booking
+    const booking = await Booking.create({
+      ticketNumber,
+      customerId: customerId || req.user.id, // Fallback to provider if no customer
+      scheduleId,
+      seats,
+      passengerDetails,
+      totalAmount,
+      paymentStatus: paymentMethod === 'cash' ? 'pending' : 'paid',
+      paymentMethod: paymentMethod || 'cash',
+      paymentReference: paymentMethod !== 'cash' ? `MANUAL-${Date.now()}` : null,
+      bookingStatus: 'confirmed',
+      boardingPoint: boardingPoint || schedule.route.source,
+      droppingPoint: droppingPoint || schedule.route.destination,
+      createdByRole: 'provider',
+      createdByUserId: req.user.id,
+      // Store customer info denormalized
+      customerEmail: customerEmail || null,
+      customerName: customerName || null,
+      customerPhone: customerPhone || null
+    });
+
+    // Update available seats
+    await schedule.update({ 
+      availableSeats: schedule.availableSeats - seats.length 
+    });
+
+    // Get complete booking with associations
+    const completeBooking = await Booking.findByPk(booking.id, {
+      include: [
+        { 
+          model: Schedule, 
+          as: 'schedule',
+          include: [
+            { model: Bus, as: 'bus' },
+            { model: Route, as: 'route' }
+          ]
+        },
+        { model: User, as: 'customer', attributes: ['id', 'name', 'email', 'phoneNumber'] }
+      ]
+    });
+
+    res.status(201).json({ 
+      message: 'Booking created successfully!', 
+      booking: completeBooking 
+    });
+  } catch (err) {
+    console.error('Create manual booking error:', err);
+    res.status(500).json({ message: err.message });
+  }
 };

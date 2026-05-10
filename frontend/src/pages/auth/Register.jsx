@@ -5,7 +5,25 @@ import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 export default function Register() {
-  const [form, setForm] = useState({ name:'', email:'', password:'', confirmPassword:'', phone:'', role:'customer', companyName:'', companyAddress:'' });
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+
+    phoneNumber: '',
+    address: '',
+
+    idType: 'NID',
+    idNumber: '',
+    dateOfBirth: '',
+
+    role: 'customer',
+
+    companyName: '',
+    companyAddress: '',
+    TCPermitNumber: ''
+  });
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -28,9 +46,10 @@ export default function Register() {
   const f = (k) => ({ value: form[k], onChange: e => setForm(p => ({...p, [k]: e.target.value})) });
 
   return (
+    
     <div className="min-h-screen flex">
       <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1516302752625-fcc3c50ae61f?w=1200&q=80" alt="Annapurna" className="w-full h-full object-cover" />
+        <img src="/images/Swayambhu.jpg" alt="Annapurna" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-nepal-blue/85 to-nepal-red/40" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-10 text-center">
           <div className="text-6xl font-nepali font-bold opacity-20 absolute top-10">नेपाल</div>
@@ -56,6 +75,7 @@ export default function Register() {
             <div>
               <label className="label">I am a...</label>
               <div className="grid grid-cols-2 gap-3">
+                
                 {[['customer','🧑 Traveler / Customer'],['provider','🚌 Bus Operator / Provider']].map(([r, l]) => (
                   <label key={r} className={`flex items-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-all ${form.role===r ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}>
                     <input type="radio" name="role" value={r} checked={form.role===r} onChange={() => setForm(p=>({...p,role:r}))} className="text-primary-500" />
@@ -74,7 +94,7 @@ export default function Register() {
               <div>
                 <label className="label">Phone</label>
                 <div className="relative"><Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input {...f('phone')} className="input-field pl-10" placeholder="98XXXXXXXX" /></div>
+                  <input {...f('phoneNumber')} className="input-field pl-10" placeholder="98XXXXXXXX" required /></div>
               </div>
             </div>
 
@@ -98,6 +118,63 @@ export default function Register() {
                   <input type="password" {...f('confirmPassword')} className="input-field pl-10" placeholder="Repeat password" required /></div>
               </div>
             </div>
+          {/* Identity Details */}
+            <div className="border-t border-gray-100 pt-4 space-y-4">
+              <p className="text-sm font-medium text-gray-700">
+                Passenger Identity Details
+              </p>
+
+              {/* Customer Address */}
+              {form.role === 'customer' && (
+                <div>
+                  <label className="label">Address</label>
+                  <input
+                    {...f('address')}
+                    className="input-field"
+                    placeholder="Kathmandu, Nepal"
+                    required
+                  />
+                </div>
+              )}
+
+              {/* ID Type + ID Number */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="label">ID Type</label>
+                  <select
+                    {...f('idType')}
+                    className="input-field"
+                    required
+                  >
+                    <option value="NID">National ID</option>
+                    <option value="CITIZEN_ID">Citizenship</option>
+                    <option value="DRIVING_LICENSE">Driving License</option>
+                    <option value="PASSPORT">Passport</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="label">ID Number</label>
+                  <input
+                    {...f('idNumber')}
+                    className="input-field"
+                    placeholder="Document Number"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* DOB */}
+              <div>
+                <label className="label">Date of Birth</label>
+                <input
+                  type="date"
+                  {...f('dateOfBirth')}
+                  className="input-field"
+                  required
+                />
+              </div>
+            </div>
 
             {form.role === 'provider' && (
               <div className="border-t border-gray-100 pt-4 space-y-4">
@@ -109,6 +186,15 @@ export default function Register() {
                 <div>
                   <label className="label">Company Address</label>
                   <input {...f('companyAddress')} className="input-field" placeholder="Kalanki, Kathmandu" />
+                </div>
+                <div>
+                  <label className="label">Transport Company Permit Number</label>
+                  <input
+                    {...f('TCPermitNumber')}
+                    className="input-field"
+                    placeholder="TC-XXXX-XXXX"
+                    required
+                  />
                 </div>
               </div>
             )}

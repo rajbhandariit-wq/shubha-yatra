@@ -53,7 +53,12 @@ export default function SeatSelection() {
       {/* Header */}
       <div className="bg-gradient-to-r from-nepal-blue to-blue-700 text-white py-6">
         <div className="max-w-5xl mx-auto px-4">
-          <Link to="/search" className="flex items-center gap-2 text-blue-200 hover:text-white mb-3 text-sm"><ArrowLeft className="h-4 w-4" /> Back to results</Link>
+          <Link
+              to={`/search?source=${route?.source}&destination=${route?.destination}&date=${schedule?.travelDate}&seats=1`}
+              className="flex items-center gap-2 text-blue-200 hover:text-white mb-3 text-sm"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back to results
+            </Link>
           <div className="flex items-center gap-3">
             <Bus className="h-6 w-6" />
             <div>

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
@@ -21,11 +22,41 @@ import ProviderBookings from './pages/provider/Bookings';
 import ProviderMessaging from './pages/provider/Messaging';
 import ProviderReports from './pages/provider/Reports';
 import ProviderSchedules from './pages/provider/Schedules';
+import CreateBooking from "./pages/provider/CreateBooking";
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
 import AdminReports from './pages/admin/Reports';
+
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+
+
+
+const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
+
+function BackButtonHandler() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const isAuthRoute = AUTH_ROUTES.some(r => location.pathname.startsWith(r));
+    if (!isAuthRoute) return;
+
+    // Push an extra history entry so the back button has somewhere to land
+    window.history.pushState(null, '');
+
+    const handlePopState = () => {
+      navigate('/', { replace: true });
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [location.pathname, navigate]);
+
+  return null;
+}
 
 const ProtectedRoute = ({ children, roles }) => {
   const { user, loading } = useAuth();
@@ -38,6 +69,8 @@ const ProtectedRoute = ({ children, roles }) => {
 function AppRoutes() {
   const { user } = useAuth();
   return (
+    <>
+    <BackButtonHandler />
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={user ? <Navigate to={user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/'} /> : <Login />} />
@@ -57,6 +90,7 @@ function AppRoutes() {
       <Route path="/provider/bookings" element={<ProtectedRoute roles={['provider']}><ProviderBookings /></ProtectedRoute>} />
       <Route path="/provider/messaging" element={<ProtectedRoute roles={['provider']}><ProviderMessaging /></ProtectedRoute>} />
       <Route path="/provider/reports" element={<ProtectedRoute roles={['provider']}><ProviderReports /></ProtectedRoute>} />
+      <Route path="/provider/create-booking" element={<CreateBooking />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -64,7 +98,10 @@ function AppRoutes() {
       <Route path="/admin/reports" element={<ProtectedRoute roles={['admin']}><AdminReports /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
     </Routes>
+    </>
   );
 }
 

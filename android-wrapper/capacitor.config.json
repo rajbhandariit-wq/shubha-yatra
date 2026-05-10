@@ -12,6 +12,9 @@
     "iosScheme": "capacitor"
   },
   "android": {
+    "minSdkVersion": 22,
+    "targetSdkVersion": 35,
+    "compileSdkVersion": 35,
     "allowMixedContent": false,
     "webContentsDebuggingEnabled": true,
     "minWebViewVersion": 61
