@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Static vector drawable for the Shubha Yatra launcher icon.
+  Named groups (sun_group, bus_group, bus_wheel_left, bus_wheel_right) are
+  targeted by avd_ic_launcher.xml's animators.
+
+  viewport: 1024×1024
+  Circular clip-path keeps the icon fully round on every launcher.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1024"
+    android:viewportHeight="1024">
+
+    <!-- Circular clip — everything below is masked to a circle -->
+    <group android:name="root">
+        <clip-path
+            android:pathData="M512,0 a512,512 0 1,0 0.001,0 Z" />
+
+        <!-- Sky gradient -->
+        <path android:pathData="M0,0 L1024,0 L1024,1024 L0,1024 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient
+                    android:type="linear"
+                    android:startX="0" android:startY="0"
+                    android:endX="0"   android:endY="1024">
+                    <item android:offset="0"    android:color="#FFD9C2" />
+                    <item android:offset="0.45" android:color="#F2A6A0" />
+                    <item android:offset="1"    android:color="#DC143C" />
+                </gradient>
+            </aapt:attr>
+        </path>
+
+        <!-- Sun (animated translateY) -->
+        <group android:name="sun_group" android:translateY="0">
+            <!-- Outer halo ring -->
+            <path
+                android:pathData="M760,186 a104,104 0 1,0 0.001,0 Z M760,290 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0 Z"
+                android:fillColor="#66FFE9A8" />
+            <!-- Sun disc -->
+            <path
+                android:pathData="M760,212 a78,78 0 1,0 0.001,0 Z"
+                android:fillColor="#FFE9A8" />
+        </group>
+
+        <!-- Mountains — far, mid, front (static) -->
+        <path
+            android:pathData="M0,720 L120,560 L210,640 L320,500 L430,610 L540,470 L660,580 L780,460 L900,560 L1024,520 L1024,1024 L0,1024 Z"
+            android:fillColor="#59FFFFFF" />
+        <path
+            android:pathData="M0,800 L100,680 L200,740 L300,620 L420,700 L540,580 L640,680 L760,600 L880,700 L1024,660 L1024,1024 L0,1024 Z"
+            android:fillColor="#A6FFFFFF" />
+        <path
+            android:pathData="M0,860 L160,760 L280,820 L420,640 L560,780 L700,720 L820,820 L940,760 L1024,820 L1024,1024 L0,1024 Z"
+            android:fillColor="#FFFFFFFF" />
+        <!-- Snow shadows -->
+        <path
+            android:pathData="M420,640 L470,720 L390,720 Z M560,780 L600,830 L520,830 Z M700,720 L730,780 L670,780 Z"
+            android:fillColor="#240A1F44" />
+
+        <!-- Road -->
+        <path
+            android:pathData="M-20,960 Q300,900 512,930 T1100,880"
+            android:strokeColor="#0A1F44"
+            android:strokeWidth="16"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M-20,960 Q300,900 512,930 T1100,880"
+            android:strokeColor="#FFC940"
+            android:strokeWidth="4" />
+
+        <!-- Bus (animated translateX) — final position translateX = 420, y = 848 -->
+        <group android:name="bus_group" android:translateX="420" android:translateY="848">
+            <!-- Body -->
+            <path
+                android:pathData="M0,0 L174,0 Q190,0 190,16 L190,66 Q190,82 174,82 L16,82 Q0,82 0,66 Z"
+                android:fillColor="#DC143C"
+                android:strokeColor="#0A1F44"
+                android:strokeWidth="4" />
+            <!-- Windows -->
+            <path
+                android:pathData="M10,12 L52,12 Q57,12 57,17 L57,37 Q57,42 52,42 L10,42 Q5,42 5,37 L5,17 Q5,12 10,12 Z"
+                android:fillColor="#A8D8FF" />
+            <path
+                android:pathData="M62,12 L104,12 Q109,12 109,17 L109,37 Q109,42 104,42 L62,42 Q57,42 57,17 Q57,12 62,12 Z"
+                android:fillColor="#A8D8FF" />
+            <path
+                android:pathData="M114,12 L156,12 Q161,12 161,17 L161,37 Q161,42 156,42 L114,42 Q109,42 109,17 Q109,12 114,12 Z"
+                android:fillColor="#A8D8FF" />
+            <!-- Headlight -->
+            <path
+                android:pathData="M166,14 L184,14 Q187,14 187,17 L187,33 Q187,36 184,36 L166,36 Z"
+                android:fillColor="#FFE9A8" />
+
+            <!-- Left wheel (animated rotation around its own center: 40,90) -->
+            <group android:name="bus_wheel_left" android:pivotX="40" android:pivotY="90" android:rotation="0">
+                <path
+                    android:pathData="M40,90 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z"
+                    android:fillColor="#0A1F44" />
+                <path
+                    android:pathData="M40,76 L40,104 M26,90 L54,90"
+                    android:strokeColor="#FFC940"
+                    android:strokeWidth="3" />
+                <path
+                    android:pathData="M40,90 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z"
+                    android:fillColor="#FFC940" />
+            </group>
+
+            <!-- Right wheel -->
+            <group android:name="bus_wheel_right" android:pivotX="150" android:pivotY="90" android:rotation="0">
+                <path
+                    android:pathData="M150,90 m-16,0 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0 Z"
+                    android:fillColor="#0A1F44" />
+                <path
+                    android:pathData="M150,76 L150,104 M136,90 L164,90"
+                    android:strokeColor="#FFC940"
+                    android:strokeWidth="3" />
+                <path
+                    android:pathData="M150,90 m-6,0 a6,6 0 1,0 12,0 a6,6 0 1,0 -12,0 Z"
+                    android:fillColor="#FFC940" />
+            </group>
+        </group>
+    </group>
+</vector>

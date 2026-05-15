@@ -70,6 +70,62 @@ const sendGenericEmail = async ({ to, subject, message }) => {
   }
 };
 
+const sendPendingBankEmail = async ({ to, name, ticketNumber, route, date, departureTime, seats = [], amount, bankDetails }) => {
+  const seatList = seats.join(', ');
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;border:2px solid #f59e0b;border-radius:8px;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#92400e,#b45309);padding:20px;text-align:center;color:white;">
+        <h1 style="margin:0;font-size:26px;">🔄 Booking Received</h1>
+        <p style="margin:5px 0;font-size:13px;">Shubha Yatra — Payment Verification Pending</p>
+      </div>
+      <div style="padding:24px;">
+        <h2 style="color:#b45309;">Hello ${name},</h2>
+        <p>We have received your booking. Your <strong>bank transfer is being verified</strong> and your ticket will be issued once the payment is confirmed.</p>
+        <p style="background:#fef3c7;border-left:4px solid #f59e0b;padding:12px;border-radius:4px;font-size:13px;">
+          ⏱️ <strong>Expected verification time: 24 hours</strong><br/>
+          You will receive your full ticket with QR code once approved.
+        </p>
+        <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+          <tr style="background:#f5f5f5;"><td style="padding:8px;font-weight:bold;">Ticket No.</td><td style="padding:8px;font-family:monospace;">${ticketNumber}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;">Route</td><td style="padding:8px;">${route}</td></tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px;font-weight:bold;">Date</td><td style="padding:8px;">${date}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;">Departure</td><td style="padding:8px;">${departureTime}</td></tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px;font-weight:bold;">Seats</td><td style="padding:8px;">${seatList}</td></tr>
+          <tr><td style="padding:8px;font-weight:bold;">Amount Due</td><td style="padding:8px;font-weight:bold;color:#DC143C;">NPR ${amount}</td></tr>
+        </table>
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
+          <h3 style="color:#0369a1;margin-top:0;">🏦 Bank Transfer Details</h3>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#666;">Bank</td><td style="padding:6px 0;font-weight:bold;">${bankDetails.bankName}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Account Name</td><td style="padding:6px 0;font-weight:bold;">${bankDetails.accountName}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Account Number</td><td style="padding:6px 0;font-family:monospace;font-weight:bold;font-size:15px;">${bankDetails.accountNumber}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">SWIFT</td><td style="padding:6px 0;font-family:monospace;">${bankDetails.swiftCode}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;">Branch</td><td style="padding:6px 0;">${bankDetails.branch}</td></tr>
+            <tr style="border-top:2px solid #bae6fd;"><td style="padding:8px 0;color:#0369a1;font-weight:bold;">Reference No.</td><td style="padding:8px 0;font-family:monospace;font-weight:bold;color:#DC143C;font-size:15px;">${bankDetails.reference}</td></tr>
+          </table>
+          <p style="font-size:12px;color:#0369a1;margin-bottom:0;">⚠️ Please use the <strong>Reference No.</strong> when making your transfer so we can match it to your booking.</p>
+        </div>
+        <p style="color:#666;font-size:12px;">If you have already completed the transfer, please allow up to 24 hours for verification. For queries, contact support.</p>
+      </div>
+      <div style="background:#92400e;color:white;text-align:center;padding:12px;font-size:12px;">
+        © 2024 Shubha Yatra | Nepal's Trusted Bus Booking Platform
+      </div>
+    </div>`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `Shubha Yatra <${FROM}>`,
+      to, subject: `🔄 Booking Received - ${ticketNumber} | Payment Verification Pending`, html,
+    });
+    if (error) throw new Error(error.message);
+    console.log('📧 Pending bank email sent to:', to);
+    return { success: true, id: data.id };
+  } catch (err) {
+    console.error('❌ Pending email failed:', err.message);
+    return { success: false, error: err.message };
+  }
+};
+
 const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
   console.log('Sending reset email to:', to);
@@ -143,4 +199,4 @@ const sendPasswordResetSuccessEmail = async ({ to, name }) => {
   }
 };
 
-module.exports = { sendTicketEmail, sendGenericEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail };
+module.exports = { sendTicketEmail, sendPendingBankEmail, sendGenericEmail, sendPasswordResetEmail, sendPasswordResetSuccessEmail };

@@ -9,8 +9,13 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import SearchResults from './pages/customer/SearchResults';
 import SeatSelection from './pages/customer/SeatSelection';
+import ReturnBusSelection from './pages/customer/ReturnBusSelection';
+import BookingSummary from './pages/customer/BookingSummary';
 import Payment from './pages/customer/Payment';
 import Ticket from './pages/customer/Ticket';
+import Tickets from './pages/customer/Tickets';
+import PaymentCallback from './pages/customer/PaymentCallback';
+import PaymentFailed from './pages/customer/PaymentFailed';
 import MyBookings from './pages/customer/MyBookings';
 
 // Provider pages
@@ -28,6 +33,7 @@ import CreateBooking from "./pages/provider/CreateBooking";
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
 import AdminReports from './pages/admin/Reports';
+import AdminBookings from './pages/admin/Bookings';
 
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
@@ -77,8 +83,13 @@ function AppRoutes() {
       <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
       <Route path="/search" element={<SearchResults />} />
       <Route path="/select-seats/:scheduleId" element={<SeatSelection />} />
+      <Route path="/return-bus-selection" element={<ReturnBusSelection />} />
+      <Route path="/booking-review" element={<ProtectedRoute roles={['customer']}><BookingSummary /></ProtectedRoute>} />
       <Route path="/payment" element={<ProtectedRoute roles={['customer']}><Payment /></ProtectedRoute>} />
       <Route path="/ticket/:bookingId" element={<ProtectedRoute roles={['customer']}><Ticket /></ProtectedRoute>} />
+      <Route path="/tickets" element={<ProtectedRoute roles={['customer']}><Tickets /></ProtectedRoute>} />
+      <Route path="/payment/callback" element={<ProtectedRoute roles={['customer']}><PaymentCallback /></ProtectedRoute>} />
+      <Route path="/payment/failed" element={<PaymentFailed />} />
       <Route path="/my-bookings" element={<ProtectedRoute roles={['customer']}><MyBookings /></ProtectedRoute>} />
 
       {/* Provider Routes */}
@@ -95,6 +106,7 @@ function AppRoutes() {
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
+      <Route path="/admin/bookings" element={<ProtectedRoute roles={['admin']}><AdminBookings /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute roles={['admin']}><AdminReports /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />

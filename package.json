@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/rajbhandariit-wq/shubha-yatra/issues"
   },
-  "homepage": "https://github.com/rajbhandariit-wq/shubha-yatra#readme"
+  "homepage": "https://github.com/rajbhandariit-wq/shubha-yatra#readme",
+  "dependencies": {
+    "resend": "^6.12.3"
+  }
 }

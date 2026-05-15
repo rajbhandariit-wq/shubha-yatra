@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shubha Yatra brand palette -->
+    <color name="brand_crimson">#DC143C</color>      <!-- Nepal flag crimson · primary -->
+    <color name="brand_cobalt">#003893</color>       <!-- Nepal flag blue · secondary -->
+    <color name="brand_sun">#FFC940</color>          <!-- Accent · CTA highlights -->
+    <color name="brand_dawn_pink">#F2A6A0</color>    <!-- Splash mid -->
+    <color name="brand_sky_peach">#FFD9C2</color>    <!-- Splash top -->
+    <color name="brand_night">#0A1F44</color>        <!-- On-light text / on-splash text -->
+    <color name="brand_snow">#FFFFFF</color>
+
+    <!-- Splash background colors (Android 12+ uses a single solid color) -->
+    <color name="splash_background">#F2A6A0</color>  <!-- dawn pink, mid-tone of the gradient -->
+</resources>

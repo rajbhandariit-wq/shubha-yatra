@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bus, Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
+import { Bus, Mail, Phone, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+// Detect whether the identifier looks like a phone number
+const isPhone = (v) => /^[0-9+\s\-()]{7,15}$/.test(v.trim());
+
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [showPwd, setShowPwd] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const [identifier, setIdentifier] = useState('');
+  const [password,   setPassword]   = useState('');
+  const [showPwd,    setShowPwd]     = useState(false);
+  const [loading,    setLoading]     = useState(false);
+  const { login }    = useAuth();
+  const navigate     = useNavigate();
+  const location     = useLocation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const user = await login(form.email, form.password);
+      const user = await login(identifier.trim(), password);
       toast.success(`Welcome back, ${user.name.split(' ')[0]}! 🙏`);
       const from = location.state?.from || (user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/');
       navigate(from, { replace: true });
@@ -25,22 +29,25 @@ export default function Login() {
     } finally { setLoading(false); }
   };
 
-  const demoLogin = async (email, password) => {
-    setForm({ email, password });
+  const demoLogin = async (id, pwd) => {
+    setIdentifier(id);
     setLoading(true);
     try {
-      const user = await login(email, password);
+      const user = await login(id, pwd);
       toast.success(`Logged in as ${user.role}!`);
       navigate(user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/');
     } catch { toast.error('Demo login failed'); }
     finally { setLoading(false); }
   };
 
+  const looksLikePhone = isPhone(identifier);
+  const IdentifierIcon = looksLikePhone ? Phone : Mail;
+
   return (
     <div className="min-h-screen flex">
-      {/* Left - Nepal imagery */}
+      {/* Left — Nepal imagery */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=1200&q=80" alt="Swayambhunath" className="w-full h-full object-cover" />
+        <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=1200&q=80" alt="Nepal" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-br from-nepal-blue/80 to-nepal-red/50" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-12">
           <div className="text-7xl font-nepali font-bold opacity-30 absolute top-10">शुभ यात्रा</div>
@@ -49,14 +56,17 @@ export default function Login() {
           <p className="text-xl font-nepali text-center mb-2">शुभ यात्रा — सुरक्षित यात्रा</p>
           <p className="text-white/80 text-center max-w-xs">Nepal's most trusted bus ticket booking platform. Journey safely across the Himalayas.</p>
           <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-            {[['50+','Operators'],['200+','Routes'],['10K+','Travelers']].map(([n,l]) => (
-              <div key={l} className="bg-white/10 backdrop-blur rounded-xl p-3"><p className="text-2xl font-bold">{n}</p><p className="text-xs text-white/70">{l}</p></div>
+            {[['50+','Operators'],['200+','Routes'],['10K+','Travelers']].map(([n, l]) => (
+              <div key={l} className="bg-white/10 backdrop-blur rounded-xl p-3">
+                <p className="text-2xl font-bold">{n}</p>
+                <p className="text-xs text-white/70">{l}</p>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Right - Login form */}
+      {/* Right — Login form */}
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
@@ -69,29 +79,50 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 space-y-5">
             <div>
-              <label className="label">Email Address</label>
+              <label className="label">Email or Mobile Number</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input type="email" value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value}))} className="input-field pl-10" placeholder="your@email.com" required />
+                <IdentifierIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 transition-all" />
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={e => setIdentifier(e.target.value)}
+                  className="input-field pl-10"
+                  placeholder="your@email.com or 98XXXXXXXX"
+                  autoComplete="username"
+                  required
+                />
               </div>
+              <p className="text-xs text-gray-400 mt-1">You can sign in with either your email address or registered phone number</p>
             </div>
+
             <div>
               <label className="label">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input type={showPwd ? 'text' : 'password'} value={form.password} onChange={e => setForm(f=>({...f,password:e.target.value}))} className="input-field pl-10 pr-10" placeholder="••••••••" required />
-                <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="input-field pl-10 pr-10"
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  required
+                />
+                <button type="button" onClick={() => setShowPwd(!showPwd)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               <div className="text-right mt-1">
-                <a href="/forgot-password" className="text-sm text-nepal-red hover:underline">
-                  Forgot Password?
-                </a>
+                <Link to="/forgot-password" className="text-sm text-nepal-red hover:underline">Forgot Password?</Link>
               </div>
             </div>
+
             <button type="submit" disabled={loading} className="btn-primary w-full flex items-center justify-center gap-2">
-              {loading ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"/> : <><LogIn className="h-4 w-4" /> Sign In</>}
+              {loading
+                ? <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                : <><LogIn className="h-4 w-4" /> Sign In</>
+              }
             </button>
           </form>
 
@@ -99,11 +130,15 @@ export default function Login() {
           <div className="mt-6 bg-white rounded-2xl shadow p-5">
             <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Demo Accounts</p>
             <div className="grid grid-cols-3 gap-2">
-              {[['Customer','customer1@example.com','pass123','bg-green-50 border-green-200 text-green-700'],
-                ['Provider','provider1@shubhayatra.com','pass123','bg-blue-50 border-blue-200 text-blue-700'],
-                ['Admin','admin@shubhayatra.com','Admin@123','bg-yellow-50 border-yellow-200 text-yellow-700']].map(([role,email,pwd,cls]) => (
-                <button key={role} onClick={() => demoLogin(email, pwd)} className={`border rounded-xl p-2.5 text-xs text-center ${cls} hover:shadow transition-all`}>
-                  <p className="font-bold">{role}</p><p className="opacity-70 mt-0.5 truncate">{email}</p>
+              {[
+                ['Customer', 'customer1@example.com', 'pass123',  'bg-green-50 border-green-200 text-green-700'],
+                ['Provider', 'provider1@shubhayatra.com', 'pass123', 'bg-blue-50 border-blue-200 text-blue-700'],
+                ['Admin',    'admin@shubhayatra.com', 'Admin@123', 'bg-yellow-50 border-yellow-200 text-yellow-700'],
+              ].map(([role, id, pwd, cls]) => (
+                <button key={role} onClick={() => demoLogin(id, pwd)}
+                  className={`border rounded-xl p-2.5 text-xs text-center ${cls} hover:shadow transition-all`}>
+                  <p className="font-bold">{role}</p>
+                  <p className="opacity-70 mt-0.5 truncate">{id}</p>
                 </button>
               ))}
             </div>

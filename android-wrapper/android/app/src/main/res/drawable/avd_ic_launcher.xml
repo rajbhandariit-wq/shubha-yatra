@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  AnimatedVectorDrawable for Shubha Yatra splash icon.
+  Binds three animators to named groups in ic_launcher_vector.xml.
+
+  Use in your splash theme:
+    <item name="windowSplashScreenAnimatedIcon">@drawable/avd_ic_launcher</item>
+    <item name="windowSplashScreenAnimationDuration">1000</item>
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_vector">
+
+    <!-- Sun rises from below the horizon to its final position -->
+    <target
+        android:name="sun_group"
+        android:animation="@animator/sun_rise" />
+
+    <!-- Bus rolls in from the left along the road -->
+    <target
+        android:name="bus_group"
+        android:animation="@animator/bus_roll" />
+
+    <!-- Wheels spin while the bus rolls -->
+    <target
+        android:name="bus_wheel_left"
+        android:animation="@animator/wheel_spin" />
+    <target
+        android:name="bus_wheel_right"
+        android:animation="@animator/wheel_spin" />
+</animated-vector>

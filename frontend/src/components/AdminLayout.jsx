@@ -1,20 +1,29 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, LogOut, Shield, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { LayoutDashboard, Users, BarChart2, LogOut, Shield, Menu, X, Building2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { adminAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const links = [
-  { to: '/admin', icon: LayoutDashboard, label: 'Dashboard', exact: true },
-  { to: '/admin/users', icon: Users, label: 'All Users' },
-  { to: '/admin/reports', icon: BarChart2, label: 'Reports' },
+  { to: '/admin',          icon: LayoutDashboard, label: 'Dashboard',        exact: true },
+  { to: '/admin/users',    icon: Users,           label: 'All Users'                     },
+  { to: '/admin/bookings', icon: Building2,       label: 'Pending Transfers'             },
+  { to: '/admin/reports',  icon: BarChart2,       label: 'Reports'                       },
 ];
 
 export default function AdminLayout({ children, title }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen,    setSidebarOpen]    = useState(false);
+  const [pendingCount,   setPendingCount]   = useState(0);
   const handleLogout = () => { logout(); toast.success('Logged out!'); navigate('/'); };
+
+  useEffect(() => {
+    adminAPI.getPendingBookings()
+      .then(r => setPendingCount(r.data.count || 0))
+      .catch(() => {});
+  }, []);
 
   const Sidebar = () => (
     <div className="flex flex-col h-full">
@@ -27,7 +36,13 @@ export default function AdminLayout({ children, title }) {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {links.map(({ to, icon: Icon, label, exact }) => (
           <NavLink key={to} to={to} end={exact} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-            <Icon className="h-5 w-5" /><span>{label}</span>
+            <Icon className="h-5 w-5" />
+            <span className="flex-1">{label}</span>
+            {to === '/admin/bookings' && pendingCount > 0 && (
+              <span className="ml-auto bg-yellow-400 text-yellow-900 text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                {pendingCount}
+              </span>
+            )}
           </NavLink>
         ))}
       </nav>

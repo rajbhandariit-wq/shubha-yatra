@@ -16,7 +16,7 @@
     "targetSdkVersion": 35,
     "compileSdkVersion": 35,
     "allowMixedContent": false,
-    "webContentsDebuggingEnabled": true,
+    "webContentsDebuggingEnabled": false,
     "minWebViewVersion": 61
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bus, MapPin, Calendar, Clock, ArrowRight, CheckCircle, Download, Share2, Printer, Home } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
@@ -209,12 +210,23 @@ const shareTicket = async () => {
             </div>
           </div>
 
-          {/* QR placeholder */}
+          {/* QR Code */}
           <div className="px-5 pb-5 text-center">
-            <div className="inline-block border-2 border-gray-200 rounded-xl p-2 bg-white">
-              <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-xs text-gray-400 text-center break-words px-1">QR Code<br/>{booking?.ticketNumber.substring(0, 8)}</p>
-              </div>
+            <div className="inline-block border-2 border-gray-200 rounded-xl p-3 bg-white">
+              <QRCodeSVG
+                value={JSON.stringify({
+                  ticket: booking?.ticketNumber,
+                  route: `${route?.source} → ${route?.destination}`,
+                  date: schedule?.travelDate,
+                  departure: schedule?.departureTime,
+                  seats: booking?.seats?.sort((a, b) => a - b).join(', '),
+                  passenger: booking?.passengerDetails?.[0]?.name,
+                })}
+                size={96}
+                bgColor="#ffffff"
+                fgColor="#1e3a5f"
+                level="M"
+              />
             </div>
             <p className="text-xs text-gray-400 mt-2">Show this ticket at boarding • यो टिकट देखाउनुहोस्</p>
           </div>

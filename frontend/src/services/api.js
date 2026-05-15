@@ -67,6 +67,7 @@ export const providerAPI = {
   // Schedules
   getSchedules: () => api.get('/provider/schedules'),
   createSchedule: (data) => api.post('/provider/schedules', data),
+  createBulkSchedules: (data) => api.post('/provider/schedules/bulk', data),
   // Bookings
   getBookings: (params) => api.get('/provider/bookings', { params }),
   // Staff
@@ -86,6 +87,18 @@ export const providerAPI = {
   createBooking: (data) => api.post('/provider/bookings/create', data),
 };
 
+// Payment
+export const paymentAPI = {
+  cancelPayment:      (data) => api.post('/payment/cancel', data),
+  createStripeIntent: (data) => api.post('/payment/stripe/create-intent', data),
+  confirmStripe:      (data) => api.post('/payment/stripe/confirm', data),
+  initiateEsewa:      (data) => api.post('/payment/esewa/initiate', data),
+  verifyEsewa:        (data) => api.post('/payment/esewa/verify', data),
+  initiateKhalti:     (data) => api.post('/payment/khalti/initiate', data),
+  verifyKhalti:       (data) => api.post('/payment/khalti/verify', data),
+  payByBank:          (data) => api.post('/payment/bank', data),
+};
+
 // Admin
 export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard'),
@@ -99,6 +112,10 @@ export const adminAPI = {
   getPendingProviders: () => api.get('/admin/providers/pending'),
   approveProvider: (id) => api.put(`/admin/providers/${id}/approve`),
   rejectProvider: (id) => api.put(`/admin/providers/${id}/reject`),
+  // Pending bank transfer bookings
+  getPendingBookings: () => api.get('/admin/bookings/pending'),
+  approveBooking: (id) => api.put(`/admin/bookings/${id}/approve`),
+  rejectBooking: (id, data) => api.put(`/admin/bookings/${id}/reject`, data),
 };
 
 

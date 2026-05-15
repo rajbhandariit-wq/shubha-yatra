@@ -63,7 +63,7 @@ export default function ProviderBookings() {
                     <td className="px-4 py-3"><span className={statusColors[b.bookingStatus]||'badge-pending'}>{b.bookingStatus}</span></td>
                   </tr>
                 ))}
-                {bookings.length === 0 && <tr><td colSpan="7" className="text-center py-16 text-gray-400">No bookings found</td></tr>}
+                {bookings.length === 0 && <tr><td colSpan="8" className="text-center py-16 text-gray-400">No bookings found</td></tr>}
               </tbody>
             </table>
           </div>

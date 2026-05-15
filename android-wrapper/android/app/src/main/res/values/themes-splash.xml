@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 12+ splash screen theme.
+  Add to your AndroidManifest.xml on the launcher activity:
+      android:theme="@style/Theme.App.Starting"
+
+  After your first frame draws, switch to your real app theme via
+      setTheme(R.style.Theme.App)
+  in onCreate(), before super.onCreate().
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Background shown behind the icon -->
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+
+        <!-- The animated icon — sun rises + bus rolls inside the circular launcher mark -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_ic_launcher</item>
+
+        <!-- Icon animation duration (ms). Must match the AVD's total runtime. -->
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+
+        <!-- Theme to switch to after the splash -->
+        <item name="postSplashScreenTheme">@style/Theme.App</item>
+    </style>
+</resources>

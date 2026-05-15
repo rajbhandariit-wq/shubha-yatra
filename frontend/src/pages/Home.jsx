@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, MapPin, Calendar, Users, ArrowRight, Star, Shield, Clock, Headphones, ChevronRight } from 'lucide-react';
+import { Search, MapPin, Calendar, ArrowRight, ArrowLeftRight, Star, Shield, Clock, Headphones } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { customerAPI } from '../services/api';
@@ -17,23 +17,22 @@ const NEPAL_LANDMARKS = [
 
 const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalgunj','Dharan','Biratnagar','Janakpur','Bhairahawa','Birgunj','Hetauda','Dhangadhi','Illam','Tansen','Mustang'];
 
+const todayStr = new Date().toISOString().split('T')[0];
+
 export default function Home() {
   const navigate = useNavigate();
   const [bgIdx, setBgIdx] = useState(0);
-  const [form, setForm] = useState({ source: '', destination: '', date: new Date().toISOString().split('T')[0],});
+  const [form, setForm] = useState({ source: '', destination: '', date: todayStr, tripType: 'oneWay', returnDate: '' });
   const [popularRoutes, setPopularRoutes] = useState([]);
   const [srcSuggest, setSrcSuggest] = useState([]);
   const [dstSuggest, setDstSuggest] = useState([]);
+
   const isValidCity = (city) => NEPAL_CITIES.includes(city);
-
   const isSearchValid =
-    isValidCity(form.source) &&
-    isValidCity(form.destination) &&
-    form.source !== form.destination &&
-    form.source.trim() !== '' &&
-    form.destination.trim() !== '';
+    isValidCity(form.source) && isValidCity(form.destination) &&
+    form.source !== form.destination && form.source.trim() !== '' && form.destination.trim() !== '' &&
+    (form.tripType === 'oneWay' || (form.returnDate && form.returnDate >= form.date));
 
-  // Rotate background
   useEffect(() => {
     const t = setInterval(() => setBgIdx(i => (i + 1) % NEPAL_LANDMARKS.length), 6000);
     return () => clearInterval(t);
@@ -49,26 +48,28 @@ export default function Home() {
     e.preventDefault();
     if (!form.source || !form.destination) return toast.error('Please enter source and destination');
     if (form.source === form.destination) return toast.error('Source and destination cannot be same');
-    navigate(`/search?source=${encodeURIComponent(form.source)}&destination=${encodeURIComponent(form.destination)}&date=${form.date}`);
+    if (form.tripType === 'roundTrip' && !form.returnDate) return toast.error('Please select a return date');
+    const p = new URLSearchParams({ source: form.source, destination: form.destination, date: form.date });
+    if (form.tripType === 'roundTrip') { p.set('tripType', 'roundTrip'); p.set('returnDate', form.returnDate); }
+    navigate(`/search?${p.toString()}`);
   };
 
+  const swapCities = () => setForm(f => ({ ...f, source: f.destination, destination: f.source }));
+
   const landmark = NEPAL_LANDMARKS[bgIdx];
-  
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
 
-      {/* Hero Section with rotating Nepal landmarks */}
       <section className="relative min-h-[88vh] flex items-center overflow-hidden">
-        {/* Background image with transition */}
         {NEPAL_LANDMARKS.map((lm, i) => (
           <div key={i} className={`absolute inset-0 transition-opacity duration-2000 ${i === bgIdx ? 'opacity-100' : 'opacity-0'}`}>
-            <img src={lm.url} alt={lm.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display='none'; }} />
+            <img src={lm.url} alt={lm.name} className="w-full h-full object-cover" onError={(e) => { e.target.style.display = 'none'; }} />
             <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
           </div>
         ))}
 
-        {/* Watermark overlay */}
         <div className="absolute inset-0 flex items-end justify-end pointer-events-none">
           <div className="mb-6 mr-6 text-white/20 text-right">
             <p className="text-6xl font-nepali font-bold">शुभ यात्रा</p>
@@ -76,20 +77,17 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Landmark indicator */}
         <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 text-white text-sm">
           <p className="font-semibold">{landmark.name}</p>
           <p className="text-white/70 text-xs font-nepali">{landmark.subtitle}</p>
         </div>
 
-        {/* Slide dots */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
           {NEPAL_LANDMARKS.map((_, i) => (
             <button key={i} onClick={() => setBgIdx(i)} className={`h-2 rounded-full transition-all ${i === bgIdx ? 'bg-white w-6' : 'bg-white/40 w-2'}`} />
           ))}
         </div>
 
-        {/* Hero content */}
         <div className="relative z-10 w-full max-w-6xl mx-auto px-4 sm:px-6 py-20">
           <div className="text-center mb-10">
             <div className="inline-flex items-center gap-2 bg-nepal-red/90 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm mb-4">
@@ -98,7 +96,7 @@ export default function Home() {
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-3 leading-tight drop-shadow-lg">
               Your Safe Journey<br />
-              <span className="text-nepal-red drop-shadow-none" style={{textShadow:'2px 2px 0 rgba(0,0,0,0.3)'}}>Starts Here</span>
+              <span className="text-nepal-red drop-shadow-none" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.3)' }}>Starts Here</span>
             </h1>
             <p className="text-xl text-white/90 font-nepali mb-2">शुभ यात्रा — नेपालभर सुरक्षित यात्रा</p>
             <p className="text-white/70">Book bus tickets across Nepal — Fast, Easy, Reliable</p>
@@ -106,79 +104,84 @@ export default function Home() {
 
           {/* Search Box */}
           <form onSubmit={handleSearch} className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl p-6 max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Trip type toggle */}
+            <div className="flex gap-2 mb-4">
+              <button type="button" onClick={() => setForm(f => ({ ...f, tripType: 'oneWay', returnDate: '' }))}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${form.tripType === 'oneWay' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'}`}>
+                <ArrowRight className="h-3.5 w-3.5" /> One Way
+              </button>
+              <button type="button" onClick={() => setForm(f => ({ ...f, tripType: 'roundTrip' }))}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-sm font-medium border transition-colors ${form.tripType === 'roundTrip' ? 'bg-primary-600 text-white border-primary-600' : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'}`}>
+                <ArrowLeftRight className="h-3.5 w-3.5" /> Round Trip
+              </button>
+            </div>
+
+            <div className={`grid grid-cols-1 gap-4 ${form.tripType === 'roundTrip' ? 'md:grid-cols-5' : 'md:grid-cols-4'}`}>
               {/* Source */}
               <div className="relative">
                 <label className="label text-gray-700">From • यहाँबाट</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-nepal-red" />
-                  <input value={form.source} onChange={e => { setForm(f=>({...f,source:e.target.value})); setSrcSuggest(filterCities(e.target.value)); }}
+                  <input value={form.source} onChange={e => { setForm(f => ({ ...f, source: e.target.value })); setSrcSuggest(filterCities(e.target.value)); }}
                     className="input-field pl-9 text-sm" placeholder="Kathmandu..." autoComplete="off" />
                 </div>
                 {srcSuggest.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                    {srcSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f=>({...f,source:c})); setSrcSuggest([]); }}>{c}</button>)}
+                    {srcSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f => ({ ...f, source: c })); setSrcSuggest([]); }}>{c}</button>)}
                   </div>
                 )}
-                {form.source && !isValidCity(form.source) && (
-                  <p className="text-xs text-red-500 mt-1">Invalid city</p>
-                )}
+                {form.source && !isValidCity(form.source) && <p className="text-xs text-red-500 mt-1">Invalid city</p>}
               </div>
-              {/* Destination */}
+
+              {/* Swap + Destination */}
               <div className="relative">
                 <label className="label text-gray-700">To • त्यहाँसम्म</label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-nepal-blue" />
-                  <input value={form.destination} onChange={e => { setForm(f=>({...f,destination:e.target.value})); setDstSuggest(filterCities(e.target.value)); }}
-                    className="input-field pl-9 text-sm" placeholder="Pokhara..." autoComplete="off" />
+                  <input value={form.destination} onChange={e => { setForm(f => ({ ...f, destination: e.target.value })); setDstSuggest(filterCities(e.target.value)); }}
+                    className="input-field pl-9 pr-9 text-sm" placeholder="Pokhara..." autoComplete="off" />
+                  <button type="button" onClick={swapCities} title="Swap cities"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition-colors">
+                    <ArrowLeftRight className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 {dstSuggest.length > 0 && (
                   <div className="absolute top-full left-0 right-0 z-50 bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-40 overflow-y-auto">
-                    {dstSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f=>({...f,destination:c})); setDstSuggest([]); }}>{c}</button>)}
+                    {dstSuggest.map(c => <button key={c} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-600" onClick={() => { setForm(f => ({ ...f, destination: c })); setDstSuggest([]); }}>{c}</button>)}
                   </div>
                 )}
-                {form.destination && !isValidCity(form.destination) && (
-                  <p className="text-xs text-red-500 mt-1">Invalid city</p>
-                )}
+                {form.destination && !isValidCity(form.destination) && <p className="text-xs text-red-500 mt-1">Invalid city</p>}
               </div>
-              {/* Date */}
+
+              {/* Depart Date */}
               <div>
-                <label className="label text-gray-700">Date • मिति</label>
+                <label className="label text-gray-700">{form.tripType === 'roundTrip' ? 'Depart • जाने' : 'Date • मिति'}</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input type="date" value={form.date} min={new Date().toISOString().split('T')[0]} onChange={e => setForm(f=>({...f,date:e.target.value}))} className="input-field pl-9 text-sm" />
+                  <input type="date" value={form.date} min={todayStr}
+                    onChange={e => setForm(f => ({ ...f, date: e.target.value, returnDate: f.returnDate && f.returnDate < e.target.value ? e.target.value : f.returnDate }))}
+                    className="input-field pl-9 text-sm" />
                 </div>
               </div>
-              {/* Seats + Button */}
-              {/* <div>
-                <label className="label text-gray-700">Seats • सिट</label>
-                <div className="flex gap-2">
-                  <div className="relative w-24">
-                    <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    <select value={form.seats} onChange={e => setForm(f=>({...f,seats:e.target.value}))} className="input-field pl-9 text-sm">
-                      {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n}</option>)}
-                    </select>
+
+              {/* Return Date (round trip only) */}
+              {form.tripType === 'roundTrip' && (
+                <div>
+                  <label className="label text-gray-700">Return • फर्कने</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary-500" />
+                    <input type="date" value={form.returnDate} min={form.date || todayStr}
+                      onChange={e => setForm(f => ({ ...f, returnDate: e.target.value }))}
+                      className="input-field pl-9 text-sm" />
                   </div>
-                    <button
-                      type="submit"
-                      disabled={!isSearchValid}
-                      className={`btn-primary flex-1 flex items-center justify-center gap-2 text-sm whitespace-nowrap
-                        ${!isSearchValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    >
-                      <Search className="h-4 w-4" />
-                      Search
-                    </button>
                 </div>
-              </div> */}
+              )}
+
+              {/* Search Button */}
               <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={!isSearchValid}
-                  className={`btn-primary w-full flex items-center justify-center gap-2 text-sm h-[42px]
-                    ${!isSearchValid ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
-                  <Search className="h-4 w-4" />
-                  Search
+                <button type="submit" disabled={!isSearchValid}
+                  className={`btn-primary w-full flex items-center justify-center gap-2 text-sm h-[42px] ${!isSearchValid ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <Search className="h-4 w-4" /> Search
                 </button>
               </div>
             </div>
@@ -215,10 +218,9 @@ export default function Home() {
 
       {/* Popular Routes */}
       <section className="py-16 bg-gray-50 relative overflow-hidden">
-        {/* Nepal mountain silhouette watermark */}
         <div className="absolute inset-0 flex items-end justify-center pointer-events-none opacity-5">
           <svg viewBox="0 0 1200 300" className="w-full" fill="#003893">
-            <polygon points="0,300 150,100 250,180 350,80 450,160 550,60 650,140 750,50 850,130 950,70 1050,150 1150,90 1200,300"/>
+            <polygon points="0,300 150,100 250,180 350,80 450,160 550,60 650,140 750,50 850,130 950,70 1050,150 1150,90 1200,300" />
           </svg>
         </div>
         <div className="max-w-6xl mx-auto px-4 relative">
@@ -228,17 +230,15 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {(popularRoutes.length > 0 ? popularRoutes : [
-              {source:'Kathmandu',destination:'Pokhara',fare:800},{source:'Kathmandu',destination:'Chitwan',fare:600},
-              {source:'Pokhara',destination:'Lumbini',fare:700},{source:'Kathmandu',destination:'Birgunj',fare:750},
-              {source:'Pokhara',destination:'Biratnagar',fare:1500},{source:'Kathmandu',destination:'Nepalgunj',fare:1200},
+              { source: 'Kathmandu', destination: 'Pokhara', fare: 800 }, { source: 'Kathmandu', destination: 'Chitwan', fare: 600 },
+              { source: 'Pokhara', destination: 'Lumbini', fare: 700 }, { source: 'Kathmandu', destination: 'Birgunj', fare: 750 },
+              { source: 'Pokhara', destination: 'Biratnagar', fare: 1500 }, { source: 'Kathmandu', destination: 'Nepalgunj', fare: 1200 },
             ]).map((r, i) => (
               <button key={i} onClick={() => navigate(`/search?source=${r.source}&destination=${r.destination}&date=${form.date}`)}
                 className="flex items-center justify-between p-4 bg-white rounded-xl border border-gray-200 hover:border-primary-400 hover:shadow-md transition-all group text-left">
                 <div>
                   <div className="flex items-center gap-2 text-gray-800 font-semibold">
-                    <span>{r.source}</span>
-                    <ArrowRight className="h-4 w-4 text-primary-500" />
-                    <span>{r.destination}</span>
+                    <span>{r.source}</span><ArrowRight className="h-4 w-4 text-primary-500" /><span>{r.destination}</span>
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">Daily service available</p>
                 </div>
@@ -262,7 +262,7 @@ export default function Home() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {NEPAL_LANDMARKS.map((lm, i) => (
               <div key={i} className="relative rounded-2xl overflow-hidden h-52 group cursor-pointer">
-                <img src={lm.url} alt={lm.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.target.parentElement.style.background = 'linear-gradient(135deg, #003893, #DC143C)'; e.target.style.display='none'; }} />
+                <img src={lm.url} alt={lm.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.target.parentElement.style.background = 'linear-gradient(135deg, #003893, #DC143C)'; e.target.style.display = 'none'; }} />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                 <div className="absolute bottom-3 left-3 text-white">
                   <p className="font-bold text-sm">{lm.name}</p>

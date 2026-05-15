@@ -107,9 +107,15 @@ export default function MyBookings() {
                       <div className="flex flex-col items-end gap-3">
                         <p className="text-xl font-extrabold text-primary-600">NPR {b.totalAmount}</p>
                         <div className="flex gap-2">
-                          <Link to={`/ticket/${b.id}`} state={{ booking: b }} className="flex items-center gap-1.5 px-3 py-1.5 bg-nepal-blue text-white text-xs font-medium rounded-lg hover:bg-blue-700">
-                            <Eye className="h-3.5 w-3.5" /> View Ticket
-                          </Link>
+                          {b.bookingStatus === 'pending' ? (
+                            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-50 border border-yellow-300 text-yellow-700 text-xs font-medium rounded-lg">
+                              <Clock className="h-3.5 w-3.5" /> Awaiting Approval
+                            </span>
+                          ) : b.bookingStatus !== 'cancelled' && (
+                            <Link to={`/ticket/${b.id}`} state={{ booking: b }} className="flex items-center gap-1.5 px-3 py-1.5 bg-nepal-blue text-white text-xs font-medium rounded-lg hover:bg-blue-700">
+                              <Eye className="h-3.5 w-3.5" /> View Ticket
+                            </Link>
+                          )}
                           {isCancellable && !travelPast && (
                             <button onClick={() => handleCancel(b.id)} disabled={cancelling===b.id} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50">
                               {cancelling===b.id ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-red-400 border-t-transparent"/> : <XCircle className="h-3.5 w-3.5" />} Cancel
@@ -118,6 +124,12 @@ export default function MyBookings() {
                         </div>
                       </div>
                     </div>
+                    {b.bookingStatus === 'pending' && (
+                      <div className="mt-3 text-xs text-yellow-700 bg-yellow-50 border border-yellow-200 px-3 py-2 rounded-lg flex items-start gap-2">
+                        <Clock className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                        <span>Your bank transfer is being verified. Your ticket will be sent to your email once approved (within 24 hours).</span>
+                      </div>
+                    )}
                     {b.bookingStatus === 'cancelled' && (
                       <div className="mt-3 text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">
                         Cancelled{b.cancelledAt ? ` on ${new Date(b.cancelledAt).toLocaleDateString()}` : ''}{b.cancellationReason ? ` — ${b.cancellationReason}` : ''} • Refund: {b.paymentStatus}

@@ -7,6 +7,7 @@ const authRoutes = require('./src/routes/auth');
 const customerRoutes = require('./src/routes/customer');
 const providerRoutes = require('./src/routes/provider');
 const adminRoutes = require('./src/routes/admin');
+const paymentRoutes = require('./src/routes/payment');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK', app: 'Shubha Yatra API' }));
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Wheel spin while the bus rolls.
+  Targets `bus_wheel_left` and `bus_wheel_right` rotation in ic_launcher_vector.xml.
+  Linear interpolator — wheels turn at constant rate.
+-->
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:propertyName="rotation"
+    android:valueFrom="0"
+    android:valueTo="1440"
+    android:valueType="floatType"
+    android:startOffset="250"
+    android:duration="750"
+    android:interpolator="@android:anim/linear_interpolator" />

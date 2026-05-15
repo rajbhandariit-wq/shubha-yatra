@@ -174,8 +174,46 @@ exports.createSchedule = async (req, res) => {
     if (!bus) return res.status(404).json({ message: 'Bus not found' });
     const schedule = await Schedule.create({ busId, routeId, travelDate, departureTime, arrivalTime, fare, availableSeats: bus.totalSeats });
     res.status(201).json({ message: 'Schedule created', schedule });
-  } catch (err) { 
-    res.status(500).json({ message: err.message }); 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+exports.createBulkSchedules = async (req, res) => {
+  try {
+    const { busId, routeId, startDate, endDate, daysOfWeek, departureTime, arrivalTime, fare, dayOverrides = {} } = req.body;
+    if (!busId || !routeId || !startDate || !endDate || !daysOfWeek?.length) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id } });
+    if (!bus) return res.status(404).json({ message: 'Bus not found' });
+
+    const records = [];
+    const end = new Date(endDate);
+    const cur = new Date(startDate);
+    while (cur <= end) {
+      const day = cur.getDay();
+      if (daysOfWeek.includes(day)) {
+        const ov = dayOverrides[day] || {};
+        records.push({
+          busId, routeId,
+          travelDate: cur.toISOString().split('T')[0],
+          departureTime: ov.departureTime || departureTime,
+          arrivalTime: ov.arrivalTime || arrivalTime,
+          fare,
+          availableSeats: bus.totalSeats,
+        });
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+
+    if (records.length === 0) {
+      return res.status(400).json({ message: 'No dates match the selected days in the given range' });
+    }
+    await Schedule.bulkCreate(records, { ignoreDuplicates: true });
+    res.status(201).json({ message: `${records.length} schedules created`, count: records.length });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

@@ -6,3 +6,8 @@ module.exports = (req, res, next) => {
   }
   next();
 };
+const providerApproved = require('../middleware/providerApproved');
+
+router.use(authenticate);
+router.use(authorize('provider'));
+router.use(providerApproved);

@@ -1,5 +1,7 @@
 const { Op } = require('sequelize');
 const { User, Bus, Route, Booking, Schedule, sequelize } = require('../models');
+const { sendTicketEmail } = require('../services/emailService');
+const { sendTicketSMS }   = require('../services/smsService');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -140,6 +142,78 @@ exports.getPendingProviders = async (req, res) => {
 
     res.json({ message: 'Provider approved successfully' });
   };
+
+// ─── Pending bookings (bank transfer approval) ────────────────────────────────
+
+exports.getPendingBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.findAll({
+      where: { bookingStatus: 'pending', paymentMethod: 'bank' },
+      include: [
+        { model: User,     as: 'customer',  attributes: ['name', 'email', 'phoneNumber'] },
+        { model: Schedule, as: 'schedule',  include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] },
+      ],
+      order: [['createdAt', 'DESC']],
+    });
+    res.json({ bookings, count: bookings.length });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.approveBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByPk(req.params.id, {
+      include: [
+        { model: User,     as: 'customer' },
+        { model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] },
+      ],
+    });
+    if (!booking)                          return res.status(404).json({ message: 'Booking not found' });
+    if (booking.bookingStatus !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
+
+    await booking.update({ bookingStatus: 'confirmed', paymentStatus: 'paid' });
+
+    // Send full ticket via email + SMS
+    const ticketData = {
+      ticketNumber:  booking.ticketNumber,
+      route:         `${booking.schedule.route.source} → ${booking.schedule.route.destination}`,
+      date:          booking.schedule.travelDate,
+      departureTime: booking.schedule.departureTime,
+      seats:         booking.seats,
+      passengers:    booking.passengerDetails,
+      amount:        booking.totalAmount,
+    };
+    if (booking.customer?.email) {
+      sendTicketEmail({ to: booking.customer.email, name: booking.customer.name, ...ticketData }).catch(console.error);
+    }
+    if (booking.customer?.phoneNumber) {
+      sendTicketSMS({ phone: booking.customer.phoneNumber, ...ticketData }).catch(console.error);
+    }
+
+    res.json({ message: 'Booking approved and ticket sent to customer', booking });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.rejectBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByPk(req.params.id, {
+      include: [{ model: Schedule, as: 'schedule' }],
+    });
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    await booking.update({
+      bookingStatus:     'cancelled',
+      paymentStatus:     'failed',
+      cancellationReason: req.body.reason || 'Bank transfer not verified',
+      cancelledAt:       new Date(),
+    });
+    // Release held seats
+    await booking.schedule.update({
+      availableSeats: booking.schedule.availableSeats + booking.seats.length,
+    });
+
+    res.json({ message: 'Booking rejected and seats released' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
 
   exports.rejectProvider = async (req, res) => {
     const { id } = req.params;

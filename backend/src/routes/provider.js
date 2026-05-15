@@ -27,6 +27,7 @@ router.delete('/routes/:id', ...auth, ctrl.deleteRoute);
 // Schedule management
 router.get('/schedules', ...auth, ctrl.getSchedules);
 router.post('/schedules', ...auth, ctrl.createSchedule);
+router.post('/schedules/bulk', ...auth, ctrl.createBulkSchedules);
 
 // NEW: Schedule search for manual booking
 router.get('/schedules/search', ...auth, ctrl.searchSchedules);
