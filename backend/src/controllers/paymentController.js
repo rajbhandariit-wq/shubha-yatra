@@ -6,7 +6,10 @@ const { sendTicketEmail, sendPendingBankEmail } = require('../services/emailServ
 const { sendTicketSMS, sendPendingBankSMS }   = require('../services/smsService');
 const Stripe = require('stripe');
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) throw new Error('STRIPE_SECRET_KEY is not configured');
+  return Stripe(process.env.STRIPE_SECRET_KEY);
+};
 
 const ESEWA_MERCHANT  = process.env.ESEWA_MERCHANT_CODE || 'EPAYTEST';
 const ESEWA_SECRET    = process.env.ESEWA_SECRET_KEY    || '8gBm/:&EnhH.1/q';
@@ -288,7 +291,7 @@ exports.createStripeIntent = async (req, res) => {
     const bookingIds = createdBookings.map(b => b.id);
 
     // Stripe does not support NPR; use USD for sandbox testing
-    const intent = await stripe.paymentIntents.create({
+    const intent = await getStripe().paymentIntents.create({
       amount:   Math.round(totalAmount), // treating NPR amount as cents for sandbox
       currency: 'usd',
       metadata: { bookingIds: bookingIds.join(','), customerId },
@@ -304,7 +307,7 @@ exports.confirmStripe = async (req, res) => {
   try {
     const { paymentIntentId, bookingIds } = req.body;
 
-    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const intent = await getStripe().paymentIntents.retrieve(paymentIntentId);
     if (intent.status !== 'succeeded') {
       await cancelBookings(bookingIds);
       return res.status(400).json({ message: `Payment not completed (status: ${intent.status})` });
