@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Legacy splash drawable for Android 11 and below.
-  Uses the full splash.png as a centered bitmap on the splash background.
-  Density-specific copies of splash.png live in res/drawable-port-*dpi/.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />

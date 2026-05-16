@@ -28,6 +28,7 @@ import ProviderMessaging from './pages/provider/Messaging';
 import ProviderReports from './pages/provider/Reports';
 import ProviderSchedules from './pages/provider/Schedules';
 import CreateBooking from "./pages/provider/CreateBooking";
+import ProviderDocuments from './pages/provider/Documents';
 
 // Admin pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -102,6 +103,7 @@ function AppRoutes() {
       <Route path="/provider/messaging" element={<ProtectedRoute roles={['provider']}><ProviderMessaging /></ProtectedRoute>} />
       <Route path="/provider/reports" element={<ProtectedRoute roles={['provider']}><ProviderReports /></ProtectedRoute>} />
       <Route path="/provider/create-booking" element={<CreateBooking />} />
+      <Route path="/provider/documents" element={<ProtectedRoute roles={['provider']}><ProviderDocuments /></ProtectedRoute>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />

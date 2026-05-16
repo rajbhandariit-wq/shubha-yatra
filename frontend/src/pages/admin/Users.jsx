@@ -1,8 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Search, Shield, User, Trash2, Lock, ToggleLeft, ToggleRight, X, ChevronDown, Filter } from 'lucide-react';
+import { Search, Shield, User, Trash2, Lock, ToggleLeft, ToggleRight, X, Filter, Eye, Phone, Building2, MapPin, Calendar, CheckCircle, XCircle } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import { adminAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+
+function DetailRow({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+      <Icon className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+      <div>
+        <p className="text-xs text-gray-400">{label}</p>
+        <p className="text-sm font-medium text-gray-800">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -12,6 +24,8 @@ export default function AdminUsers() {
   const [resetModal, setResetModal] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [saving, setSaving] = useState(false);
+  const [detailUser, setDetailUser] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const load = (params = {}) => {
     setLoading(true);
@@ -32,7 +46,7 @@ export default function AdminUsers() {
   };
 
   const handleDelete = async (user) => {
-    if (!confirm(`Delete ${user.name}? This will deactivate their account.`)) return;
+    if (!confirm(`Permanently delete ${user.name}? This cannot be undone and will remove all their associated data.`)) return;
     try {
       await adminAPI.deleteUser(user.id);
       toast.success('User deleted');
@@ -50,6 +64,16 @@ export default function AdminUsers() {
       setResetModal(null); setNewPassword('');
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
     finally { setSaving(false); }
+  };
+
+  const handleViewDetail = async (user) => {
+    setDetailLoading(true);
+    setDetailUser(user);
+    try {
+      const r = await adminAPI.getUserById(user.id);
+      setDetailUser(r.data.user);
+    } catch { toast.error('Failed to load user details'); }
+    finally { setDetailLoading(false); }
   };
 
   const roleColors = { customer: 'bg-blue-100 text-blue-700', provider: 'bg-purple-100 text-purple-700', admin: 'bg-yellow-100 text-yellow-700' };
@@ -124,20 +148,25 @@ export default function AdminUsers() {
                         <span className={u.isActive ? 'badge-confirmed' : 'badge-cancelled'}>{u.isActive ? 'Active' : 'Inactive'}</span>
                       </td>
                       <td className="px-4 py-3">
-                        {u.role !== 'admin' && (
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => { setResetModal(u); setNewPassword(''); }} title="Reset Password" className="p-1.5 text-gray-400 hover:text-nepal-blue hover:bg-blue-50 rounded-lg transition-colors">
-                              <Lock className="h-4 w-4" />
-                            </button>
-                            <button onClick={() => handleToggle(u)} title={u.isActive ? 'Deactivate' : 'Activate'} className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
-                              {u.isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                            </button>
-                            <button onClick={() => handleDelete(u)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        )}
-                        {u.role === 'admin' && <span className="text-xs text-gray-300 italic">Protected</span>}
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleViewDetail(u)} title="View Details" className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors">
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          {u.role !== 'admin' && (
+                            <>
+                              <button onClick={() => { setResetModal(u); setNewPassword(''); }} title="Reset Password" className="p-1.5 text-gray-400 hover:text-nepal-blue hover:bg-blue-50 rounded-lg transition-colors">
+                                <Lock className="h-4 w-4" />
+                              </button>
+                              <button onClick={() => handleToggle(u)} title={u.isActive ? 'Deactivate' : 'Activate'} className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
+                                {u.isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                              </button>
+                              <button onClick={() => handleDelete(u)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </>
+                          )}
+                          {u.role === 'admin' && <span className="text-xs text-gray-300 italic ml-1">Protected</span>}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -152,6 +181,74 @@ export default function AdminUsers() {
           </div>
         )}
       </div>
+
+      {/* User Detail Modal */}
+      {detailUser && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white rounded-t-2xl">
+              <h2 className="text-lg font-bold flex items-center gap-2"><Eye className="h-5 w-5 text-green-600" /> User Details</h2>
+              <button onClick={() => setDetailUser(null)}><X className="h-5 w-5 text-gray-400" /></button>
+            </div>
+            {detailLoading ? (
+              <div className="flex items-center justify-center h-48"><div className="animate-spin rounded-full h-10 w-10 border-4 border-yellow-500 border-t-transparent" /></div>
+            ) : (
+              <div className="p-6 space-y-4">
+                {/* Avatar + name */}
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-nepal-blue to-blue-700 rounded-2xl flex items-center justify-center text-white font-bold text-2xl shrink-0">
+                    {detailUser.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">{detailUser.name}</h3>
+                    <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium capitalize ${roleColors[detailUser.role]}`}>
+                      {detailUser.role}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3">
+                  <DetailRow icon={User} label="Email" value={detailUser.email} />
+                  <DetailRow icon={Phone} label="Phone" value={detailUser.phoneNumber || '—'} />
+                  {detailUser.companyName && <DetailRow icon={Building2} label="Company" value={detailUser.companyName} />}
+                  {detailUser.companyAddress && <DetailRow icon={MapPin} label="Address" value={detailUser.companyAddress} />}
+                  <DetailRow icon={Calendar} label="Joined" value={new Date(detailUser.createdAt).toLocaleDateString('en-NP', { year: 'numeric', month: 'long', day: 'numeric' })} />
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                    <span className="text-sm text-gray-500 font-medium">Account Status</span>
+                    <div className="flex items-center gap-2">
+                      {detailUser.isActive
+                        ? <span className="flex items-center gap-1 text-green-600 text-sm font-medium"><CheckCircle className="h-4 w-4" /> Active</span>
+                        : <span className="flex items-center gap-1 text-red-500 text-sm font-medium"><XCircle className="h-4 w-4" /> Inactive</span>}
+                    </div>
+                  </div>
+                  {detailUser.role === 'provider' && (
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+                      <span className="text-sm text-gray-500 font-medium">Approval Status</span>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-medium capitalize ${
+                        detailUser.status === 'active' ? 'bg-green-100 text-green-700' :
+                        detailUser.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                      }`}>{detailUser.status}</span>
+                    </div>
+                  )}
+                  {detailUser.documents?.length > 0 && (
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                      <p className="text-sm text-gray-500 font-medium mb-2">Uploaded Documents</p>
+                      <div className="space-y-1">
+                        {detailUser.documents.map((doc, i) => (
+                          <a key={i} href={`/api/uploads/${doc.filename}`} target="_blank" rel="noreferrer"
+                            className="flex items-center gap-2 text-sm text-nepal-blue hover:underline">
+                            📄 {doc.originalName || doc.filename}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Reset Password Modal */}
       {resetModal && (

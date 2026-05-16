@@ -1,30 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  AnimatedVectorDrawable for Shubha Yatra splash icon.
-  Binds three animators to named groups in ic_launcher_vector.xml.
+  AnimatedVectorDrawable — Shubha Yatra "Night Route" splash icon.
 
-  Use in your splash theme:
-    <item name="windowSplashScreenAnimatedIcon">@drawable/avd_ic_launcher</item>
-    <item name="windowSplashScreenAnimationDuration">1000</item>
+  Animation (1000ms total):
+    0–1000ms · bus travels translateX -460 → 460  (origin → destination)
+    150–1000ms · wheels spin 0° → 1440°
+    600–900ms  · headlight beam fades in (alpha 0 → 1)
+    700–1000ms · destination pin scales 0.6 → 1.1 → 1.0 (a small "you arrived" pulse)
 -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_launcher_vector">
 
-    <!-- Sun rises from below the horizon to its final position -->
-    <target
-        android:name="sun_group"
-        android:animation="@animator/sun_rise" />
-
-    <!-- Bus rolls in from the left along the road -->
     <target
         android:name="bus_group"
-        android:animation="@animator/bus_roll" />
-
-    <!-- Wheels spin while the bus rolls -->
+        android:animation="@animator/bus_travel" />
     <target
         android:name="bus_wheel_left"
         android:animation="@animator/wheel_spin" />
     <target
         android:name="bus_wheel_right"
         android:animation="@animator/wheel_spin" />
+    <target
+        android:name="beam_group"
+        android:animation="@animator/beam_fade" />
+    <target
+        android:name="pin_dest_group"
+        android:animation="@animator/pin_pulse" />
 </animated-vector>

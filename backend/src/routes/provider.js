@@ -1,12 +1,9 @@
-// Corrected provider.route.js
 const router = require('express').Router();
 const { authenticate, authorize } = require('../middleware/auth');
 const ctrl = require('../controllers/providerController');
+const upload = require('../middleware/upload');
 
-// Debug to see what's available
-console.log('Available controller functions:', Object.keys(ctrl));
 
-// Create middleware array
 const auth = [authenticate, authorize('provider')];
 
 // Dashboard
@@ -49,5 +46,10 @@ router.get('/messages', ...auth, ctrl.getNotifications);
 
 // Reports
 router.get('/reports', ...auth, ctrl.getReports);
+
+// Document upload (no providerApproved guard — pending providers must be able to upload)
+router.get('/documents', authenticate, authorize('provider'), ctrl.getDocuments);
+router.post('/documents', authenticate, authorize('provider'), upload.single('document'), ctrl.uploadDocument);
+router.delete('/documents/:filename', authenticate, authorize('provider'), ctrl.deleteDocument);
 
 module.exports = router;

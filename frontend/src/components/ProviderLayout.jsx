@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Bus, Route, Users, BookOpen, MessageSquare, BarChart2, Calendar, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Bus, Route, Users, BookOpen, MessageSquare, BarChart2, Calendar, LogOut, Menu, X, FolderOpen, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
@@ -15,6 +15,7 @@ const links = [
   { to: '/provider/staff', icon: Users, label: 'Staff' },
   { to: '/provider/messaging', icon: MessageSquare, label: 'Messaging' },
   { to: '/provider/reports', icon: BarChart2, label: 'Reports' },
+  { to: '/provider/documents', icon: FolderOpen, label: 'Documents' },
 ];
 
 export default function ProviderLayout({ children, title }) {
@@ -106,7 +107,24 @@ export default function ProviderLayout({ children, title }) {
             <span className="hidden sm:block">{user?.companyName || user?.name}</span>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6">
+          {!isApproved && (
+            <div className="mb-5 bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-yellow-800">Account Pending Verification</p>
+                <p className="text-sm text-yellow-700 mt-0.5">
+                  Your account is awaiting admin approval. Please{' '}
+                  <NavLink to="/provider/documents" className="underline font-medium hover:text-yellow-900">
+                    upload the required documents
+                  </NavLink>{' '}
+                  to speed up the verification process.
+                </p>
+              </div>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

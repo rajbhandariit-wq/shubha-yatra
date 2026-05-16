@@ -658,12 +658,54 @@ exports.createManualBooking = async (req, res) => {
       ]
     });
 
-    res.status(201).json({ 
-      message: 'Booking created successfully!', 
-      booking: completeBooking 
+    res.status(201).json({
+      message: 'Booking created successfully!',
+      booking: completeBooking
     });
   } catch (err) {
     console.error('Create manual booking error:', err);
     res.status(500).json({ message: err.message });
   }
+};
+
+// ============ DOCUMENT UPLOAD ============
+
+exports.getDocuments = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, { attributes: ['documents'] });
+    res.json({ documents: user.documents || [] });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.uploadDocument = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+    const user = await User.findByPk(req.user.id);
+    const docs = Array.isArray(user.documents) ? [...user.documents] : [];
+    docs.push({
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      uploadedAt: new Date().toISOString(),
+    });
+    await user.update({ documents: docs });
+    res.json({ message: 'Document uploaded successfully', documents: docs });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.deleteDocument = async (req, res) => {
+  try {
+    const { filename } = req.params;
+    const user = await User.findByPk(req.user.id);
+    const docs = (Array.isArray(user.documents) ? user.documents : []).filter(d => d.filename !== filename);
+    await user.update({ documents: docs });
+
+    const fs = require('fs');
+    const path = require('path');
+    const filePath = path.join(__dirname, '../../uploads/documents', filename);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    res.json({ message: 'Document removed', documents: docs });
+  } catch (err) { res.status(500).json({ message: err.message }); }
 };

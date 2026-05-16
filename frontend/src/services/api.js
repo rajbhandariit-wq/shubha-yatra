@@ -81,10 +81,12 @@ export const providerAPI = {
   // Reports
   getReports: (params) => api.get('/provider/reports', { params }),
   searchSchedules: (params) => api.get('/provider/schedules/search', { params }),
-  
   getSeatLayout: (scheduleId) => api.get(`/provider/schedules/${scheduleId}/seats`),
-  
   createBooking: (data) => api.post('/provider/bookings/create', data),
+  // Documents
+  getDocuments: () => api.get('/provider/documents'),
+  uploadDocument: (formData) => api.post('/provider/documents', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteDocument: (filename) => api.delete(`/provider/documents/${filename}`),
 };
 
 // Payment

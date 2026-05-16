@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebChromeClient;
-import android.webkit.WebStorage;
 import android.util.Log;
 import com.getcapacitor.BridgeActivity;
 
@@ -14,7 +13,6 @@ public class MainActivity extends BridgeActivity {
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        setTheme(R.style.Theme_App);
         super.onCreate(savedInstanceState);
         
         // Get the actual WebView
@@ -22,11 +20,6 @@ public class MainActivity extends BridgeActivity {
         
         // Enable debugging (already in your config, but good to have)
         WebView.setWebContentsDebuggingEnabled(true);
-        
-        // Clear cache
-        webView.clearCache(true);
-        webView.clearHistory();
-        WebStorage.getInstance().deleteAllData();
         
         // Add WebViewClient to monitor loading
         webView.setWebViewClient(new WebViewClient() {

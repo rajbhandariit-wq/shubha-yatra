@@ -49,6 +49,11 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: true,
     },
+    documents: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: [],
+    },
     resetPasswordToken: {
       type: DataTypes.STRING,
       allowNull: true,

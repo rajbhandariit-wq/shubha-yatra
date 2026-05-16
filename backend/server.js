@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { sequelize } = require('./src/models');
 
 const authRoutes = require('./src/routes/auth');
@@ -14,6 +15,7 @@ const app = express();
 app.use(cors({ origin: ['http://localhost:5173', 'http://localhost:3000'], credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -32,7 +34,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ alter: false }).then(() => {
+sequelize.sync({ alter: true }).then(() => {
   console.log('✅ Database synced');
   app.listen(PORT, () => console.log(`🚌 Shubha Yatra API running on port ${PORT}`));
 }).catch(err => {

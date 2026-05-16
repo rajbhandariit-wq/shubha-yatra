@@ -49,9 +49,15 @@ exports.register = async (req, res) => {
     const { name, email, password, role, phoneNumber, companyName } = req.body;
     
     const existingUser = await User.findOne({ where: { email } });
-    
     if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'Email already registered' });
+    }
+
+    if (phoneNumber) {
+      const existingPhone = await User.findOne({ where: { phoneNumber } });
+      if (existingPhone) {
+        return res.status(400).json({ message: 'Phone number already registered with another account' });
+      }
     }
     
     const user = await User.create({

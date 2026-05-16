@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { User, Bus, Route, Booking, Schedule, sequelize } = require('../models');
+const { User, Bus, Route, Booking, Schedule, Staff, sequelize } = require('../models');
 const { sendTicketEmail } = require('../services/emailService');
 const { sendTicketSMS }   = require('../services/smsService');
 
@@ -53,8 +53,25 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.role === 'admin') return res.status(403).json({ message: 'Cannot delete admin users' });
-    await user.update({ isActive: false });
-    res.json({ message: 'User deleted (deactivated) successfully' });
+
+    if (user.role === 'provider') {
+      const buses = await Bus.findAll({ where: { providerId: user.id } });
+      const busIds = buses.map(b => b.id);
+      if (busIds.length) {
+        const schedules = await Schedule.findAll({ where: { busId: busIds } });
+        const scheduleIds = schedules.map(s => s.id);
+        if (scheduleIds.length) await Booking.destroy({ where: { scheduleId: scheduleIds } });
+        await Schedule.destroy({ where: { busId: busIds } });
+        await Bus.destroy({ where: { id: busIds } });
+      }
+      await Route.destroy({ where: { providerId: user.id } });
+      await Staff.destroy({ where: { providerId: user.id } });
+    } else if (user.role === 'customer') {
+      await Booking.destroy({ where: { customerId: user.id } });
+    }
+
+    await user.destroy();
+    res.json({ message: 'User permanently deleted' });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
