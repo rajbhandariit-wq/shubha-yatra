@@ -134,7 +134,8 @@ exports.getTransactions = async (req, res) => {
       where,
       include: [
         { model: User,    as: 'provider', attributes: ['name', 'companyName'] },
-        { model: Booking, as: 'booking',  attributes: ['ticketNumber', 'paymentMethod', 'totalAmount'] },
+        { model: Booking, as: 'booking',  attributes: ['ticketNumber', 'paymentMethod', 'totalAmount'],
+          include: [{ model: User, as: 'customer', attributes: ['name', 'phoneNumber'] }] },
       ],
       order: [['createdAt', 'DESC']],
       limit:  parseInt(limit),

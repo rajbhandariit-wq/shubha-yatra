@@ -348,7 +348,8 @@ async function generateBatchCSV(batchId) {
   });
   const txs = await BillingTransaction.findAll({
     where: { batchId },
-    include: [{ model: Booking, as: 'booking', attributes: ['ticketNumber', 'paymentMethod', 'createdAt'] }],
+    include: [{ model: Booking, as: 'booking', attributes: ['ticketNumber', 'paymentMethod', 'createdAt'],
+      include: [{ model: User, as: 'customer', attributes: ['name', 'phoneNumber'] }] }],
     order: [['tripDate', 'ASC']],
   });
 
@@ -357,9 +358,11 @@ async function generateBatchCSV(batchId) {
     ['Batch Number', 'Provider', 'Email', 'Period Start', 'Period End', 'Total Gross (NPR)', 'Commission (NPR)', 'Net Payable (NPR)', 'Status'].map(esc).join(','),
     [batch.batchNumber, batch.provider?.companyName || batch.provider?.name, batch.provider?.email, batch.periodStart, batch.periodEnd, batch.totalGross, batch.totalCommission, batch.totalNet, batch.status].map(esc).join(','),
     '',
-    ['Ticket #', 'Trip Date', 'Gross (NPR)', 'Comm Rate', 'Commission (NPR)', 'Net (NPR)', 'Status', 'Payment Method'].map(esc).join(','),
+    ['Ticket #', 'Customer Name', 'Customer Phone', 'Trip Date', 'Gross (NPR)', 'Comm Rate', 'Commission (NPR)', 'Net (NPR)', 'Status', 'Payment Method'].map(esc).join(','),
     ...txs.map(tx => [
       tx.booking?.ticketNumber ?? tx.bookingId,
+      tx.booking?.customer?.name ?? '',
+      tx.booking?.customer?.phoneNumber ?? '',
       tx.tripDate,
       tx.grossAmount,
       `${tx.commissionRate}%`,

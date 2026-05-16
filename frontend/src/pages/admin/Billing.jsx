@@ -317,7 +317,7 @@ function TransactionsTab() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50">
-                <tr>{['Ticket #', 'Operator', 'Trip Date', 'Gross', 'Comm', 'Net', 'Status', 'Created'].map(h => (
+                <tr>{['Ticket #', 'Customer', 'Phone', 'Operator', 'Trip Date', 'Gross', 'Comm', 'Net', 'Status', 'Created'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase whitespace-nowrap">{h}</th>
                 ))}</tr>
               </thead>
@@ -325,6 +325,8 @@ function TransactionsTab() {
                 {txs.map(t => (
                   <tr key={t.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-mono text-xs">{t.booking?.ticketNumber || t.bookingId?.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-xs font-medium">{t.booking?.customer?.name || '—'}</td>
+                    <td className="px-4 py-3 text-xs text-gray-500">{t.booking?.customer?.phoneNumber || '—'}</td>
                     <td className="px-4 py-3 text-xs">{t.provider?.companyName || t.provider?.name || '—'}</td>
                     <td className="px-4 py-3 text-xs text-gray-500">{t.tripDate}</td>
                     <td className="px-4 py-3 text-xs">{fmt(t.grossAmount)}</td>
@@ -335,7 +337,7 @@ function TransactionsTab() {
                   </tr>
                 ))}
                 {txs.length === 0 && (
-                  <tr><td colSpan="8" className="text-center py-16 text-gray-400">No transactions found</td></tr>
+                  <tr><td colSpan="10" className="text-center py-16 text-gray-400">No transactions found</td></tr>
                 )}
               </tbody>
             </table>
@@ -447,7 +449,15 @@ function PayoutsTab() {
                         {['draft', 'pending_approval', 'approved'].includes(b.status) && (
                           <button onClick={() => quickAction(b.id, 'reject')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Reject"><XCircle className="h-4 w-4" /></button>
                         )}
-                        <a href={`/api/admin/billing/batches/${b.id}/export`} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg" title="Export CSV" download><Download className="h-4 w-4" /></a>
+                        <button onClick={async () => {
+                          try {
+                            const r = await billingAPI.exportBatchCSV(b.id);
+                            const url = window.URL.createObjectURL(new Blob([r.data]));
+                            const a = document.createElement('a');
+                            a.href = url; a.download = `batch-${b.batchNumber}.csv`; a.click();
+                            window.URL.revokeObjectURL(url);
+                          } catch { toast.error('Export failed'); }
+                        }} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg" title="Export CSV"><Download className="h-4 w-4" /></button>
                       </div>
                     </td>
                   </tr>
