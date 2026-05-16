@@ -4,17 +4,19 @@ const QRCode = require('qrcode');
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM || 'noreply@shubha-yatra.com';
 
-const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureTime, seats = [], amount, passengers = [] }) => {
+const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureTime, seats = [], amount, passengers = [], busName, busNumber, providerName }) => {
   const passengerList = passengers.length
     ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
     : 'N/A';
   const qrCode = await QRCode.toDataURL(JSON.stringify({ ticketNumber, route, date, departureTime, passengers }));
+  const logoUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/images/Android_logo_new.png`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
-        <h1 style="margin:0; font-size:28px;">🚌 शुभ यात्रा</h1>
-        <p style="margin:5px 0; font-size:14px;">Shubha Yatra - Your Safe Journey Partner</p>
+        <img src="${logoUrl}" alt="Shubha Yatra" style="height:56px; width:auto; display:block; margin:0 auto 10px;" />
+        <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
+        <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
       <div style="text-align:center; margin-top:20px;">
         <p style="font-size:12px; color:#666;">Scan for ticket verification</p>
@@ -25,18 +27,21 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
         <p>Dear <strong>${name}</strong>,</p>
         <p>Your ticket has been confirmed. Safe travels!</p>
         <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
-          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Ticket No.</td><td style="padding:8px;">${ticketNumber}</td></tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold; width:40%;">Ticket No.</td><td style="padding:8px; font-family:monospace; font-weight:bold;">${ticketNumber}</td></tr>
           <tr><td style="padding:8px; font-weight:bold;">Route</td><td style="padding:8px;">${route}</td></tr>
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Date</td><td style="padding:8px;">${date}</td></tr>
-          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Departure Time</td><td style="padding:8px;">${departureTime}</td></tr>
-          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Passengers</td><td style="padding:8px;"><div style="line-height:1.6;">${passengerList}</div></td></tr>
-          <tr><td style="padding:8px; font-weight:bold;">Seats</td><td style="padding:8px;">${seats.join(', ')}</td></tr>
-          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Amount Paid</td><td style="padding:8px;">NPR ${amount}</td></tr>
+          <tr><td style="padding:8px; font-weight:bold;">Departure Time</td><td style="padding:8px;">${departureTime}</td></tr>
+          <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Seats</td><td style="padding:8px;">${seats.join(', ')}</td></tr>
+          <tr><td style="padding:8px; font-weight:bold;">Passengers</td><td style="padding:8px;"><div style="line-height:1.6;">${passengerList}</div></td></tr>
+          ${busName   ? `<tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Bus</td><td style="padding:8px;">${busName}</td></tr>` : ''}
+          ${busNumber ? `<tr><td style="padding:8px; font-weight:bold;">Plate No.</td><td style="padding:8px; font-family:monospace;">${busNumber}</td></tr>` : ''}
+          ${providerName ? `<tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold;">Operator</td><td style="padding:8px;">${providerName}</td></tr>` : ''}
+          <tr><td style="padding:8px; font-weight:bold; color:#DC143C;">Amount Paid</td><td style="padding:8px; font-weight:bold; color:#DC143C;">NPR ${amount}</td></tr>
         </table>
-        <p style="color:#666; font-size:12px;">Please arrive 15 minutes before departure. शुभ यात्रा! 🙏</p>
+        <p style="color:#666; font-size:12px; margin-top:16px;">Please arrive 15 minutes before departure. शुभ यात्रा! 🙏</p>
       </div>
       <div style="background:#003893; color:white; text-align:center; padding:12px; font-size:12px;">
-        © 2024 Shubha Yatra | Nepal's Trusted Bus Booking Platform
+        © 2025 Shubha Yatra | Nepal's Trusted Bus Booking Platform
       </div>
     </div>`;
 

@@ -164,7 +164,10 @@ exports.approveBooking = async (req, res) => {
     const booking = await Booking.findByPk(req.params.id, {
       include: [
         { model: User,     as: 'customer' },
-        { model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] },
+        { model: Schedule, as: 'schedule', include: [
+          { model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName'] }] },
+          { model: Route, as: 'route' },
+        ]},
       ],
     });
     if (!booking)                          return res.status(404).json({ message: 'Booking not found' });
@@ -181,6 +184,9 @@ exports.approveBooking = async (req, res) => {
       seats:         booking.seats,
       passengers:    booking.passengerDetails,
       amount:        booking.totalAmount,
+      busName:       booking.schedule.bus?.name,
+      busNumber:     booking.schedule.bus?.registrationNumber,
+      providerName:  booking.schedule.bus?.provider?.companyName || booking.schedule.bus?.provider?.name,
     };
     if (booking.customer?.email) {
       sendTicketEmail({ to: booking.customer.email, name: booking.customer.name, ...ticketData }).catch(console.error);

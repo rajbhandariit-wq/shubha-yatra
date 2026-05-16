@@ -77,6 +77,9 @@ async function confirmBookings(bookingIds, paymentReference) {
       seats:         booking.seats,
       passengers:    booking.passengerDetails,
       amount:        booking.totalAmount,
+      busName:       booking.schedule.bus?.name,
+      busNumber:     booking.schedule.bus?.registrationNumber,
+      providerName:  booking.schedule.bus?.provider?.companyName || booking.schedule.bus?.provider?.name,
     };
     if (user?.email) {
       sendTicketEmail({ to: user.email, name: user.name, ...ticketData }).catch(console.error);
