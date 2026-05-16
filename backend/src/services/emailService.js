@@ -24,7 +24,7 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 6px;" />` : ''}
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:120px; width:auto; display:block; margin:0 auto 6px;" />` : ''}
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
         <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
