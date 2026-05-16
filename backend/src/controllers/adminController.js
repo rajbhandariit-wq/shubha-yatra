@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const { User, Bus, Route, Booking, Schedule, Staff, sequelize } = require('../models');
 const { sendTicketEmail } = require('../services/emailService');
 const { sendTicketSMS }   = require('../services/smsService');
+const billing = require('../services/billingService');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -191,6 +192,11 @@ exports.approveBooking = async (req, res) => {
     if (booking.bookingStatus !== 'pending') return res.status(400).json({ message: 'Booking is not pending' });
 
     await booking.update({ bookingStatus: 'confirmed', paymentStatus: 'paid' });
+
+    // Create billing transaction for bank-transfer approval
+    billing.createTransactionForBooking(booking, booking.schedule).catch(err =>
+      console.error('[Billing] createTransaction failed:', err.message)
+    );
 
     // Send full ticket via email + SMS
     const ticketData = {

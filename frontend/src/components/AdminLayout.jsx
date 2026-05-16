@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, BarChart2, LogOut, Shield, Menu, X, Building2 } from 'lucide-react';
+import { LayoutDashboard, Users, BarChart2, LogOut, Shield, Menu, X, Building2, DollarSign } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { adminAPI } from '../services/api';
@@ -10,6 +10,7 @@ const links = [
   { to: '/admin/users',    icon: Users,           label: 'All Users'                     },
   { to: '/admin/bookings', icon: Building2,       label: 'Pending Transfers'             },
   { to: '/admin/reports',  icon: BarChart2,       label: 'Reports'                       },
+  { to: '/admin/billing',  icon: DollarSign,      label: 'Billing & Payouts'             },
 ];
 
 export default function AdminLayout({ children, title }) {

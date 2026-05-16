@@ -101,6 +101,31 @@ export const paymentAPI = {
   payByBank:          (data) => api.post('/payment/bank', data),
 };
 
+// Billing (Admin)
+export const billingAPI = {
+  getDashboard:        ()          => api.get('/admin/billing/dashboard'),
+  syncTransactions:    ()          => api.post('/admin/billing/sync'),
+  runNightly:          ()          => api.post('/admin/billing/run-nightly'),
+  // Operators
+  getOperators:        ()          => api.get('/admin/billing/operators'),
+  getOperatorDetail:   (id)        => api.get(`/admin/billing/operators/${id}`),
+  updateOperatorSettings: (id, d)  => api.put(`/admin/billing/operators/${id}/settings`, d),
+  // Transactions
+  getTransactions:     (params)    => api.get('/admin/billing/transactions', { params }),
+  updateTransactionStatus: (id, d) => api.put(`/admin/billing/transactions/${id}/status`, d),
+  // Batches
+  getBatches:          (params)    => api.get('/admin/billing/batches', { params }),
+  getBatchDetail:      (id)        => api.get(`/admin/billing/batches/${id}`),
+  generateBatch:       (d)         => api.post('/admin/billing/batches/generate', d),
+  approveBatch:        (id)        => api.put(`/admin/billing/batches/${id}/approve`),
+  rejectBatch:         (id, d)     => api.put(`/admin/billing/batches/${id}/reject`, d),
+  markBatchPaid:       (id, d)     => api.put(`/admin/billing/batches/${id}/mark-paid`, d),
+  exportBatchCSV:      (id)        => api.get(`/admin/billing/batches/${id}/export`, { responseType: 'blob' }),
+  // Settings
+  getSettings:         ()          => api.get('/admin/billing/settings'),
+  updateSettings:      (d)         => api.put('/admin/billing/settings', d),
+};
+
 // Admin
 export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard'),

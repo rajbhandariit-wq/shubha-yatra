@@ -4,6 +4,7 @@ const { Op } = require('sequelize');
 const { Booking, Schedule, Bus, Route, User } = require('../models');
 const { sendTicketEmail, sendPendingBankEmail } = require('../services/emailService');
 const { sendTicketSMS, sendPendingBankSMS }   = require('../services/smsService');
+const billing = require('../services/billingService');
 const Stripe = require('stripe');
 
 const getStripe = () => {
@@ -67,6 +68,13 @@ async function confirmBookings(bookingIds, paymentReference) {
     paymentReference,
   })));
 
+  // Create billing transaction for each confirmed booking (fire-and-forget)
+  for (const b of bookings) {
+    billing.createTransactionForBooking(b, b.schedule).catch(err =>
+      console.error('[Billing] createTransaction failed:', err.message)
+    );
+  }
+
   for (const booking of bookings) {
     const user = await User.findByPk(booking.customerId);
     const ticketData = {
@@ -100,6 +108,10 @@ async function cancelBookings(bookingIds) {
   await Promise.all(bookings.map(async b => {
     await b.update({ bookingStatus: 'cancelled', paymentStatus: 'failed' });
     await b.schedule.update({ availableSeats: b.schedule.availableSeats + b.seats.length });
+    // Refund billing transaction if it exists
+    billing.refundTransaction(b.id).catch(err =>
+      console.error('[Billing] refundTransaction failed:', err.message)
+    );
   }));
 }
 

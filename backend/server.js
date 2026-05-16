@@ -9,6 +9,8 @@ const customerRoutes = require('./src/routes/customer');
 const providerRoutes = require('./src/routes/provider');
 const adminRoutes = require('./src/routes/admin');
 const paymentRoutes = require('./src/routes/payment');
+const billingRoutes = require('./src/routes/billing');
+const { start: startScheduler } = require('./src/jobs/payoutScheduler');
 
 const app = express();
 
@@ -23,6 +25,7 @@ app.use('/api/customer', customerRoutes);
 app.use('/api/provider', providerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/admin/billing', billingRoutes);
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK', app: 'Shubha Yatra API' }));
 
@@ -36,6 +39,7 @@ const PORT = process.env.PORT || 5000;
 
 sequelize.sync({ alter: true }).then(() => {
   console.log('✅ Database synced');
+  startScheduler();
   app.listen(PORT, () => console.log(`🚌 Shubha Yatra API running on port ${PORT}`));
 }).catch(err => {
   console.error('❌ DB connection error:', err.message);

@@ -35,6 +35,8 @@ import AdminDashboard from './pages/admin/Dashboard';
 import AdminUsers from './pages/admin/Users';
 import AdminReports from './pages/admin/Reports';
 import AdminBookings from './pages/admin/Bookings';
+import AdminBilling from './pages/admin/Billing';
+import BatchDetail from './pages/admin/BatchDetail';
 
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
@@ -110,6 +112,8 @@ function AppRoutes() {
       <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/bookings" element={<ProtectedRoute roles={['admin']}><AdminBookings /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute roles={['admin']}><AdminReports /></ProtectedRoute>} />
+      <Route path="/admin/billing" element={<ProtectedRoute roles={['admin']}><AdminBilling /></ProtectedRoute>} />
+      <Route path="/admin/billing/batches/:id" element={<ProtectedRoute roles={['admin']}><BatchDetail /></ProtectedRoute>} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
