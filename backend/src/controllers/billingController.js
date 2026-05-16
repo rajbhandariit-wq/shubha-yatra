@@ -170,7 +170,7 @@ exports.generateBatch = async (req, res) => {
       return res.status(400).json({ message: 'providerId, periodStart, periodEnd are required' });
 
     const batch = await billing.generateBatchForProvider(providerId, periodStart, periodEnd, req.user.id);
-    if (!batch) return res.status(400).json({ message: 'No eligible held transactions found (check minimum threshold)' });
+    if (!batch) return res.status(400).json({ message: 'No held transactions found in the selected period, or total net amount is below the minimum payout threshold.' });
     res.status(201).json({ message: 'Batch generated', batch });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };

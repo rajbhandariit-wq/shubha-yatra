@@ -200,6 +200,20 @@ async function generateBatchForProvider(providerId, periodStart, periodEnd, trig
   const bal = await OperatorBalance.findOne({ where: { providerId } });
   const minThreshold = parseFloat(bal?.minimumThreshold ?? settings.minimumThreshold);
 
+  // Auto-promote any pending transactions with past trip dates to held (so manual
+  // batch generation works even if the nightly cron hasn't run yet)
+  const today = new Date().toISOString().split('T')[0];
+  const pendingPast = await BillingTransaction.findAll({
+    where: { providerId, status: 'pending', tripDate: { [Op.lte]: today } },
+  });
+  for (const tx of pendingPast) {
+    const entry = { status: 'held', from: 'pending', at: new Date().toISOString(), by: 'system', note: 'Promoted at batch generation' };
+    await tx.update({ status: 'held', auditLog: [...(tx.auditLog || []), entry] });
+    const b = await getOrCreateBalance(tx.providerId);
+    await b.decrement('pendingBalance', { by: parseFloat(tx.netAmount) });
+    await b.increment('heldBalance',    { by: parseFloat(tx.netAmount) });
+  }
+
   const txs = await BillingTransaction.findAll({
     where: { providerId, status: 'held', tripDate: { [Op.between]: [periodStart, periodEnd] } },
   });
