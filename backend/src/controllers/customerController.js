@@ -208,7 +208,10 @@ exports.getBooking = async (req, res) => {
   try {
     const booking = await Booking.findOne({
       where: { id: req.params.id, customerId: req.user.id },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [
+        { model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] },
+        { model: Route, as: 'route' }
+      ]}]
     });
     if (!booking) return res.status(404).json({ message: 'Booking not found' });
     res.json({ booking });

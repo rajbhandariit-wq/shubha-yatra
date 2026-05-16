@@ -24,7 +24,7 @@ const genTicket = () => `SY${Date.now().toString(36).toUpperCase()}${Math.random
 
 async function buildPendingBooking(scheduleId, seats, passengerDetails, customerId, paymentMethod, transactionId) {
   const schedule = await Schedule.findByPk(scheduleId, {
-    include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }]
+    include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }]
   });
   if (!schedule) throw new Error('Schedule not found');
 
@@ -58,7 +58,7 @@ async function buildPendingBooking(scheduleId, seats, passengerDetails, customer
 async function confirmBookings(bookingIds, paymentReference) {
   const bookings = await Booking.findAll({
     where: { id: { [Op.in]: bookingIds } },
-    include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+    include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
   });
 
   await Promise.all(bookings.map(b => b.update({
@@ -169,7 +169,7 @@ exports.verifyEsewa = async (req, res) => {
 
     const fullBookings = await Booking.findAll({
       where: { id: { [Op.in]: bookingIds } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
     });
 
     res.json({ success: true, bookings: fullBookings });
@@ -248,7 +248,7 @@ exports.verifyKhalti = async (req, res) => {
 
     const fullBookings = await Booking.findAll({
       where: { id: { [Op.in]: bookingIds } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
     });
 
     res.json({ success: true, bookings: fullBookings });
@@ -317,7 +317,7 @@ exports.confirmStripe = async (req, res) => {
 
     const fullBookings = await Booking.findAll({
       where: { id: { [Op.in]: bookingIds } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
     });
 
     res.json({ success: true, bookings: fullBookings });
@@ -345,7 +345,7 @@ exports.payByCard = async (req, res) => {
 
     const full = await Booking.findAll({
       where: { id: { [Op.in]: created } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
     });
 
     res.status(201).json({ success: true, bookings: full });
@@ -380,7 +380,7 @@ exports.payByBank = async (req, res) => {
 
     const full = await Booking.findAll({
       where: { id: { [Op.in]: created } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus' }, { model: Route, as: 'route' }] }]
+      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
     });
 
     // Send pending email + SMS to customer for each booking

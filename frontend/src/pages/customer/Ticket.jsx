@@ -179,8 +179,17 @@ const shareTicket = async () => {
             <div className="text-center">
               <p className="text-xs text-gray-400 mb-1">Bus</p>
               <p className="font-semibold text-xs sm:text-sm break-words">{bus?.name}</p>
+              {bus?.registrationNumber && <p className="text-xs text-gray-400">{bus.registrationNumber}</p>}
             </div>
           </div>
+
+          {/* Operator */}
+          {(bus?.provider?.companyName || bus?.provider?.name) && (
+            <div className="px-5 py-3 border-b border-dashed border-gray-200 flex items-center justify-between text-sm">
+              <span className="text-xs text-gray-400 uppercase">Operator</span>
+              <span className="font-semibold text-gray-700">{bus?.provider?.companyName || bus?.provider?.name}</span>
+            </div>
+          )}
 
           {/* Passengers */}
           {booking?.passengerDetails?.length > 0 && (
