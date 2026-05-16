@@ -272,12 +272,19 @@ exports.getStaff = async (req, res) => {
   }
 };
 
+const sanitizeStaffDates = (body) => ({
+  ...body,
+  licenseExpiry: body.licenseExpiry || null,
+  joiningDate:   body.joiningDate   || null,
+  salary:        body.salary        || null,
+});
+
 exports.createStaff = async (req, res) => {
   try {
-    const staff = await Staff.create({ ...req.body, providerId: req.user.id });
+    const staff = await Staff.create({ ...sanitizeStaffDates(req.body), providerId: req.user.id });
     res.status(201).json({ message: 'Staff added', staff });
-  } catch (err) { 
-    res.status(500).json({ message: err.message }); 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -285,10 +292,10 @@ exports.updateStaff = async (req, res) => {
   try {
     const staff = await Staff.findOne({ where: { id: req.params.id, providerId: req.user.id } });
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
-    await staff.update(req.body);
+    await staff.update(sanitizeStaffDates(req.body));
     res.json({ message: 'Staff updated', staff });
-  } catch (err) { 
-    res.status(500).json({ message: err.message }); 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
