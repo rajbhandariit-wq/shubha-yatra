@@ -37,9 +37,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="bg-nepal-red p-2 rounded-lg group-hover:scale-110 transition-transform">
-              <Bus className="h-6 w-6 text-white" />
-            </div>
+            <img src="/images/Android_logo_new.png" alt="Shubha Yatra" className="h-10 w-auto object-contain group-hover:scale-110 transition-transform drop-shadow" />
             <div className="leading-tight">
               <span className="text-white font-bold text-lg tracking-tight">Shubha Yatra</span>
               <div className="text-blue-200 text-xs font-nepali leading-none">शुभ यात्रा</div>

@@ -1,5 +1,16 @@
 const { Resend } = require('resend');
 const QRCode = require('qrcode');
+const fs = require('fs');
+const path = require('path');
+
+const logoPath = path.join(__dirname, '../../../frontend/public/images/Android_logo_new.png');
+let logoDataUrl = '';
+try {
+  const logoBuffer = fs.readFileSync(logoPath);
+  logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+} catch {
+  // logo file not found — email header will fall back to text only
+}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM || 'noreply@shubha-yatra.com';
@@ -9,12 +20,11 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
     ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
     : 'N/A';
   const qrCode = await QRCode.toDataURL(JSON.stringify({ ticketNumber, route, date, departureTime, passengers }));
-  const logoUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/images/Android_logo_new.png`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
-        <img src="${logoUrl}" alt="Shubha Yatra" style="height:56px; width:auto; display:block; margin:0 auto 10px;" />
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:56px; width:auto; display:block; margin:0 auto 10px;" />` : ''}
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
         <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
