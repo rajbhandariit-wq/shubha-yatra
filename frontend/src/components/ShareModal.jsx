@@ -17,7 +17,7 @@ export default function ShareModal({ booking, onClose }) {
 
   const shareOptions = [
     { name: 'WhatsApp', Icon: () => <MessageCircle size={20} color="#25D366" />, color: '#25D366', url: `https://wa.me/?text=${encoded}` },
-    { name: 'Viber',    Icon: () => <ViberIcon size={20} />,                     color: '#7360F2', url: `viber://forward?text=${encoded}` },
+    { name: 'Viber',    Icon: () => <ViberIcon size={20} />,                     color: '#7360F2', url: `viber://forward?text=${encoded}`, deepLink: true },
     { name: 'Email',    Icon: () => <Mail size={20} color="#EA4335" />,           color: '#EA4335', url: `mailto:?subject=Bus Ticket ${booking?.ticketNumber}&body=${encodeURIComponent(text + '\n\nView ticket: ' + ticketUrl)}` },
     { name: 'Copy Link',Icon: () => copied ? <Check size={20} color="#16a34a" /> : <LinkIcon size={20} color="#6B7280" />, color: copied ? '#16a34a' : '#6B7280', action: 'copy' },
   ];
@@ -27,6 +27,14 @@ export default function ShareModal({ booking, onClose }) {
       await navigator.clipboard.writeText(ticketUrl);
       setCopied(true);
       setTimeout(() => { setCopied(false); onClose(); }, 1200);
+    } else if (option.deepLink) {
+      // Deep links (viber://, whatsapp://) — must use direct navigation, not window.open
+      const a = document.createElement('a');
+      a.href = option.url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      onClose();
     } else {
       window.open(option.url, '_blank');
       onClose();
