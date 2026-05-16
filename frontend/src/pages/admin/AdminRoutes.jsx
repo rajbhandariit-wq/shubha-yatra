@@ -2,16 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import { adminAPI } from '../../services/api';
-import useAdminPerms from '../../hooks/useAdminPerms';
 import toast from 'react-hot-toast';
 
 export default function AdminRoutes() {
-  const { assignedProviderId } = useAdminPerms();
   const [routes, setRoutes]   = useState([]);
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    search: '', isActive: '', providerId: assignedProviderId || '', page: 1,
+    search: '', isActive: '', providerId: '', page: 1,
   });
 
   const load = useCallback((f = filters) => {
@@ -52,7 +50,7 @@ export default function AdminRoutes() {
         <button onClick={() => load()} className="btn-primary py-1.5 px-4 text-sm flex items-center gap-2">
           <Search className="h-4 w-4" /> Search
         </button>
-        <button onClick={() => { const f = { search: '', isActive: '', providerId: assignedProviderId || '', page: 1 }; setFilters(f); load(f); }}
+        <button onClick={() => { const f = { search: '', isActive: '', providerId: '', page: 1 }; setFilters(f); load(f); }}
           className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Clear</button>
         <button onClick={() => load()} className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
           <RefreshCw className="h-3.5 w-3.5" />

@@ -14,14 +14,13 @@ const STATUS_COLORS = {
 };
 
 export default function AdminSchedules() {
-  const { isManager, isSuperAdmin, assignedProviderId } = useAdminPerms();
+  const { isManager, isSuperAdmin } = useAdminPerms();
   const [schedules, setSchedules] = useState([]);
   const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(false);
   const [searched, setSearched]   = useState(false);
   const [filters, setFilters]     = useState({
-    search: '', from: '', to: '', status: '',
-    providerId: assignedProviderId || '', page: 1,
+    search: '', from: '', to: '', status: '', providerId: '', page: 1,
   });
 
   const load = useCallback((f = filters) => {
@@ -69,7 +68,7 @@ export default function AdminSchedules() {
         <button onClick={() => load()} className="btn-primary py-1.5 px-4 text-sm flex items-center gap-2">
           <Search className="h-4 w-4" /> Search
         </button>
-        <button onClick={() => { const f = { search: '', from: '', to: '', status: '', providerId: assignedProviderId || '', page: 1 }; setFilters(f); load(f); }}
+        <button onClick={() => { const f = { search: '', from: '', to: '', status: '', providerId: '', page: 1 }; setFilters(f); load(f); }}
           className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Clear</button>
         <button onClick={() => load()} className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">
           <RefreshCw className="h-3.5 w-3.5" />

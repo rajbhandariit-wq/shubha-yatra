@@ -249,7 +249,7 @@ export default function AdminUsers() {
                             </>
                           )}
                           {u.role === 'admin' && isSuperAdmin && (
-                            <button onClick={() => { setEditRoleModal(u); setEditRoleForm({ adminRole: u.adminRole || 'super_admin', assignedProviderId: u.assignedProviderId || '' }); }}
+                            <button onClick={() => { setEditRoleModal(u); setEditRoleForm({ adminRole: u.adminRole || 'super_admin' }); }}
                               title="Edit Admin Role" className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
                               <Edit2 className="h-4 w-4" />
                             </button>

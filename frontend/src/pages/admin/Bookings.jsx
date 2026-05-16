@@ -105,7 +105,7 @@ function PendingCard({ b, onApprove, onReject, acting }) {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AdminBookings() {
-  const { isManager, isSuperAdmin, assignedProviderId } = useAdminPerms();
+  const { isManager, isSuperAdmin } = useAdminPerms();
   const [tab, setTab] = useState('all');
 
   // ── All Bookings state ──
@@ -113,7 +113,7 @@ export default function AdminBookings() {
   const [total, setTotal]       = useState(0);
   const [loading, setLoading]   = useState(true);
   const [search, setSearch]     = useState('');
-  const [filters, setFilters]   = useState({ status: '', paymentMethod: '', providerId: assignedProviderId || '', from: '', to: '', dateType: 'booking', page: 1 });
+  const [filters, setFilters]   = useState({ status: '', paymentMethod: '', providerId: '', from: '', to: '', dateType: 'booking', page: 1 });
   const [providers, setProviders] = useState([]);
   const searchRef = useRef(null);
 
@@ -250,7 +250,7 @@ export default function AdminBookings() {
               <label className="label text-xs">To</label>
               <input type="date" value={filters.to} onChange={e => setFilter('to', e.target.value)} className="input-field py-1.5 text-sm" />
             </div>
-            <button onClick={() => { setSearch(''); setFilters({ status: '', paymentMethod: '', providerId: assignedProviderId || '', from: '', to: '', dateType: 'booking', page: 1 }); }}
+            <button onClick={() => { setSearch(''); setFilters({ status: '', paymentMethod: '', providerId: '', from: '', to: '', dateType: 'booking', page: 1 }); }}
               className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50 flex items-center gap-1.5">
               <Filter className="h-3.5 w-3.5" /> Clear
             </button>
