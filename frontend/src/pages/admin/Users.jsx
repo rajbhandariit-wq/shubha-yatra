@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Search, Shield, User, Trash2, Lock, ToggleLeft, ToggleRight, X, Filter, Eye, Phone, Building2, MapPin, Calendar, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Shield, User, Trash2, Lock, ToggleLeft, ToggleRight, X, Filter, Eye, Phone, Building2, MapPin, Calendar, CheckCircle, XCircle, UserPlus, Edit2 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import { adminAPI } from '../../services/api';
+import useAdminPerms from '../../hooks/useAdminPerms';
 import toast from 'react-hot-toast';
+
+const ADMIN_ROLE_COLORS = {
+  super_admin: 'bg-red-100 text-red-700',
+  manager:     'bg-blue-100 text-blue-700',
+  operator:    'bg-teal-100 text-teal-700',
+};
 
 function DetailRow({ icon: Icon, label, value }) {
   return (
@@ -17,6 +24,7 @@ function DetailRow({ icon: Icon, label, value }) {
 }
 
 export default function AdminUsers() {
+  const { isSuperAdmin, canDelete } = useAdminPerms();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -26,6 +34,21 @@ export default function AdminUsers() {
   const [saving, setSaving] = useState(false);
   const [detailUser, setDetailUser] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Admin role management
+  const [createAdminModal, setCreateAdminModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager', assignedProviderId: '' });
+  const [createSaving, setCreateSaving] = useState(false);
+  const [editRoleModal, setEditRoleModal] = useState(null); // user object
+  const [editRoleForm, setEditRoleForm] = useState({ adminRole: '', assignedProviderId: '' });
+  const [editRoleSaving, setEditRoleSaving] = useState(false);
+  const [providers, setProviders] = useState([]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      adminAPI.getAllProviders({ limit: 100 }).then(r => setProviders(r.data.providers || [])).catch(() => {});
+    }
+  }, [isSuperAdmin]);
 
   const load = (params = {}) => {
     setLoading(true);
@@ -52,6 +75,31 @@ export default function AdminUsers() {
       toast.success('User deleted');
       load({ search, role: roleFilter });
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+  };
+
+  const handleCreateAdmin = async (e) => {
+    e.preventDefault();
+    setCreateSaving(true);
+    try {
+      await adminAPI.createAdminUser(createForm);
+      toast.success('Admin user created');
+      setCreateAdminModal(false);
+      setCreateForm({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager', assignedProviderId: '' });
+      load();
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+    finally { setCreateSaving(false); }
+  };
+
+  const handleEditRole = async (e) => {
+    e.preventDefault();
+    setEditRoleSaving(true);
+    try {
+      await adminAPI.setAdminRole(editRoleModal.id, editRoleForm);
+      toast.success('Admin role updated');
+      setEditRoleModal(null);
+      load({ search, role: roleFilter });
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+    finally { setEditRoleSaving(false); }
   };
 
   const handleResetPassword = async (e) => {
@@ -81,6 +129,16 @@ export default function AdminUsers() {
 
   return (
     <AdminLayout title="User Management">
+      {/* Top action row */}
+      {isSuperAdmin && (
+        <div className="flex justify-end mb-4">
+          <button onClick={() => setCreateAdminModal(true)}
+            className="btn-primary flex items-center gap-2 text-sm py-2">
+            <UserPlus className="h-4 w-4" /> Create Admin User
+          </button>
+        </div>
+      )}
+
       {/* Search & Filter bar */}
       <form onSubmit={handleSearch} className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-wrap gap-3 items-end">
         <div className="flex-1 min-w-48">
@@ -140,8 +198,13 @@ export default function AdminUsers() {
                         <span className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-medium capitalize ${roleColors[u.role]}`}>
                           <RoleIcon className="h-3 w-3" />{u.role}
                         </span>
+                        {u.role === 'admin' && (
+                          <span className={`ml-1 inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium capitalize ${ADMIN_ROLE_COLORS[u.adminRole || 'super_admin']}`}>
+                            {(u.adminRole || 'super_admin').replace('_', ' ')}
+                          </span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-gray-500">{u.phone || '—'}</td>
+                      <td className="px-4 py-3 text-gray-500">{u.phoneNumber || '—'}</td>
                       <td className="px-4 py-3 text-gray-500 max-w-32 truncate">{u.companyName || '—'}</td>
                       <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
@@ -160,12 +223,20 @@ export default function AdminUsers() {
                               <button onClick={() => handleToggle(u)} title={u.isActive ? 'Deactivate' : 'Activate'} className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors">
                                 {u.isActive ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
                               </button>
-                              <button onClick={() => handleDelete(u)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              {canDelete && (
+                                <button onClick={() => handleDelete(u)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
                             </>
                           )}
-                          {u.role === 'admin' && <span className="text-xs text-gray-300 italic ml-1">Protected</span>}
+                          {u.role === 'admin' && isSuperAdmin && (
+                            <button onClick={() => { setEditRoleModal(u); setEditRoleForm({ adminRole: u.adminRole || 'super_admin', assignedProviderId: u.assignedProviderId || '' }); }}
+                              title="Edit Admin Role" className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {u.role === 'admin' && !isSuperAdmin && <span className="text-xs text-gray-300 italic ml-1">Protected</span>}
                         </div>
                       </td>
                     </tr>
@@ -246,6 +317,84 @@ export default function AdminUsers() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Create Admin User Modal */}
+      {createAdminModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-lg font-bold flex items-center gap-2"><UserPlus className="h-5 w-5 text-teal-600" /> Create Admin User</h2>
+              <button onClick={() => setCreateAdminModal(false)}><X className="h-5 w-5 text-gray-400" /></button>
+            </div>
+            <form onSubmit={handleCreateAdmin} className="p-6 space-y-3">
+              {[['name','Name *','text'],['email','Email *','email'],['password','Password *','password'],['phoneNumber','Phone','text']].map(([k,l,t]) => (
+                <div key={k}>
+                  <label className="label text-xs">{l}</label>
+                  <input type={t} value={createForm[k]} onChange={e => setCreateForm({ ...createForm, [k]: e.target.value })}
+                    className="input-field" required={l.endsWith('*')} minLength={k === 'password' ? 6 : undefined} />
+                </div>
+              ))}
+              <div>
+                <label className="label text-xs">Admin Role *</label>
+                <select value={createForm.adminRole} onChange={e => setCreateForm({ ...createForm, adminRole: e.target.value })} className="input-field">
+                  <option value="manager">Manager</option>
+                  <option value="operator">Operator (linked to provider)</option>
+                  <option value="super_admin">Super Admin</option>
+                </select>
+              </div>
+              {createForm.adminRole === 'operator' && (
+                <div>
+                  <label className="label text-xs">Assigned Provider *</label>
+                  <select value={createForm.assignedProviderId} onChange={e => setCreateForm({ ...createForm, assignedProviderId: e.target.value })} className="input-field" required>
+                    <option value="">Select provider...</option>
+                    {providers.map(p => <option key={p.id} value={p.id}>{p.companyName || p.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setCreateAdminModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={createSaving} className="flex-1 btn-primary">{createSaving ? 'Creating...' : 'Create'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Admin Role Modal */}
+      {editRoleModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-lg font-bold flex items-center gap-2"><Edit2 className="h-5 w-5 text-teal-600" /> Edit Admin Role</h2>
+              <button onClick={() => setEditRoleModal(null)}><X className="h-5 w-5 text-gray-400" /></button>
+            </div>
+            <form onSubmit={handleEditRole} className="p-6 space-y-3">
+              <p className="text-sm text-gray-500">Editing role for <span className="font-semibold text-gray-800">{editRoleModal.name}</span></p>
+              <div>
+                <label className="label text-xs">Admin Role</label>
+                <select value={editRoleForm.adminRole} onChange={e => setEditRoleForm({ ...editRoleForm, adminRole: e.target.value })} className="input-field">
+                  <option value="super_admin">Super Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="operator">Operator (linked to provider)</option>
+                </select>
+              </div>
+              {editRoleForm.adminRole === 'operator' && (
+                <div>
+                  <label className="label text-xs">Assigned Provider</label>
+                  <select value={editRoleForm.assignedProviderId} onChange={e => setEditRoleForm({ ...editRoleForm, assignedProviderId: e.target.value })} className="input-field">
+                    <option value="">Select provider...</option>
+                    {providers.map(p => <option key={p.id} value={p.id}>{p.companyName || p.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditRoleModal(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={editRoleSaving} className="flex-1 btn-primary">{editRoleSaving ? 'Saving...' : 'Save'}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

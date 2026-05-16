@@ -143,6 +143,14 @@ export const adminAPI = {
   getPendingBookings: () => api.get('/admin/bookings/pending'),
   approveBooking: (id) => api.put(`/admin/bookings/${id}/approve`),
   rejectBooking: (id, data) => api.put(`/admin/bookings/${id}/reject`, data),
+  // RBAC — admin user management
+  createAdminUser: (data)          => api.post('/admin/users/admin', data),
+  setAdminRole:    (id, data)      => api.put(`/admin/users/${id}/admin-role`, data),
+  // Cross-module list views
+  getAllBookings:   (params)       => api.get('/admin/all-bookings', { params }),
+  getAllSchedules:  (params)       => api.get('/admin/all-schedules', { params }),
+  getAllRoutes:     (params)       => api.get('/admin/all-routes', { params }),
+  getAllProviders:  (params)       => api.get('/admin/all-providers', { params }),
 };
 
 

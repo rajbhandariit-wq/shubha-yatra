@@ -254,3 +254,176 @@ exports.rejectBooking = async (req, res) => {
 
     res.json({ message: 'Provider rejected' });
   };
+
+// ─── All Bookings (admin, with search / filter / scope) ───────────────────────
+exports.getAllBookingsAdmin = async (req, res) => {
+  try {
+    const { search, status, paymentMethod, providerId, from, to, dateType = 'booking', page = 1, limit = 20 } = req.query;
+    const providerScope = req.providerScope;
+
+    const where = {};
+    if (status)        where.bookingStatus  = status;
+    if (paymentMethod) where.paymentMethod  = paymentMethod;
+    if (from || to) {
+      if (dateType === 'booking') {
+        where.createdAt = { [Op.between]: [`${from || '2020-01-01'}T00:00:00`, `${to || '2099-12-31'}T23:59:59`] };
+      }
+    }
+    if (search) {
+      const s = sequelize.escape(`%${search}%`);
+      where[Op.or] = [
+        { ticketNumber: { [Op.iLike]: `%${search}%` } },
+        sequelize.literal(`EXISTS (SELECT 1 FROM "Users" cu WHERE cu.id = "Booking"."customerId" AND (cu.name ILIKE ${s} OR cu.email ILIKE ${s}))`),
+      ];
+    }
+
+    const busWhere = {};
+    if (providerScope)      busWhere.providerId = providerScope;
+    else if (providerId)    busWhere.providerId = providerId;
+    const hasBusFilter = Object.keys(busWhere).length > 0;
+
+    const scheduleWhere = {};
+    if (from && dateType === 'trip') scheduleWhere.travelDate = { [Op.between]: [from, to || '2099-12-31'] };
+    const hasScheduleFilter = Object.keys(scheduleWhere).length > 0;
+
+    const result = await Booking.findAndCountAll({
+      where,
+      include: [
+        { model: User, as: 'customer', attributes: ['id', 'name', 'email', 'phoneNumber'] },
+        { model: Schedule, as: 'schedule',
+          required: hasBusFilter || hasScheduleFilter,
+          where: hasScheduleFilter ? scheduleWhere : undefined,
+          attributes: ['id', 'travelDate', 'departureTime'],
+          include: [
+            { model: Bus, as: 'bus', required: hasBusFilter, where: hasBusFilter ? busWhere : undefined,
+              attributes: ['id', 'name', 'registrationNumber'],
+              include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName'] }] },
+            { model: Route, as: 'route', attributes: ['source', 'destination'] },
+          ],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit),
+      distinct: true, subQuery: false,
+    });
+
+    res.json({ bookings: result.rows, total: result.count });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── All Schedules ────────────────────────────────────────────────────────────
+exports.getAllSchedulesAdmin = async (req, res) => {
+  try {
+    const { search, from, to, providerId, status, page = 1, limit = 20 } = req.query;
+    const providerScope = req.providerScope;
+
+    const scheduleWhere = {};
+    if (status) scheduleWhere.status = status;
+    if (from || to) scheduleWhere.travelDate = { [Op.between]: [from || '2020-01-01', to || '2099-12-31'] };
+
+    const busWhere = {};
+    if (providerScope)   busWhere.providerId = providerScope;
+    else if (providerId) busWhere.providerId = providerId;
+    const hasBusFilter = Object.keys(busWhere).length > 0;
+
+    const routeWhere = {};
+    if (search) routeWhere[Op.or] = [{ source: { [Op.iLike]: `%${search}%` } }, { destination: { [Op.iLike]: `%${search}%` } }];
+    const hasRouteFilter = Object.keys(routeWhere).length > 0;
+
+    const result = await Schedule.findAndCountAll({
+      where: scheduleWhere,
+      include: [
+        { model: Bus, as: 'bus', required: hasBusFilter, where: hasBusFilter ? busWhere : undefined,
+          attributes: ['id', 'name', 'registrationNumber', 'busType', 'totalSeats'],
+          include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName'] }] },
+        { model: Route, as: 'route', required: hasRouteFilter, where: hasRouteFilter ? routeWhere : undefined,
+          attributes: ['id', 'source', 'destination', 'estimatedDuration'] },
+      ],
+      order: [['travelDate', 'DESC'], ['departureTime', 'ASC']],
+      limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit),
+      distinct: true, subQuery: false,
+    });
+
+    res.json({ schedules: result.rows, total: result.count });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── All Routes ───────────────────────────────────────────────────────────────
+exports.getAllRoutesAdmin = async (req, res) => {
+  try {
+    const { search, providerId, isActive, page = 1, limit = 50 } = req.query;
+    const providerScope = req.providerScope;
+
+    const where = {};
+    if (isActive !== undefined && isActive !== '') where.isActive = isActive === 'true';
+    if (providerScope)   where.providerId = providerScope;
+    else if (providerId) where.providerId = providerId;
+    if (search) where[Op.or] = [{ source: { [Op.iLike]: `%${search}%` } }, { destination: { [Op.iLike]: `%${search}%` } }];
+
+    const result = await Route.findAndCountAll({
+      where,
+      include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName'] }],
+      order: [['source', 'ASC'], ['destination', 'ASC']],
+      limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit),
+    });
+
+    res.json({ routes: result.rows, total: result.count });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── All Providers ────────────────────────────────────────────────────────────
+exports.getAllProvidersAdmin = async (req, res) => {
+  try {
+    const { search, status, page = 1, limit = 20 } = req.query;
+
+    const where = { role: 'provider' };
+    if (status) where.status = status;
+    if (search) where[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } }, { email: { [Op.iLike]: `%${search}%` } },
+      { companyName: { [Op.iLike]: `%${search}%` } }, { phoneNumber: { [Op.iLike]: `%${search}%` } },
+    ];
+
+    const result = await User.findAndCountAll({
+      where, attributes: { exclude: ['password'] },
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit),
+    });
+
+    const withCounts = await Promise.all(result.rows.map(async (p) => ({
+      ...p.toJSON(), busCount: await Bus.count({ where: { providerId: p.id } }),
+    })));
+
+    res.json({ providers: withCounts, total: result.count });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+// ─── Admin role management ────────────────────────────────────────────────────
+exports.setAdminRole = async (req, res) => {
+  try {
+    const { adminRole, assignedProviderId } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'admin') return res.status(400).json({ message: 'User is not an admin' });
+    await user.update({
+      adminRole: adminRole || null,
+      assignedProviderId: adminRole === 'operator' ? (assignedProviderId || null) : null,
+    });
+    res.json({ message: 'Admin role updated', user: user.toSafeObject() });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.createAdminUser = async (req, res) => {
+  try {
+    const { name, email, password, phoneNumber, adminRole = 'manager', assignedProviderId } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ message: 'name, email and password are required' });
+    if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    const exists = await User.findOne({ where: { email } });
+    if (exists) return res.status(400).json({ message: 'Email already registered' });
+    const user = await User.create({
+      name, email, password, phoneNumber: phoneNumber || null,
+      role: 'admin', adminRole: adminRole || 'manager',
+      assignedProviderId: adminRole === 'operator' ? (assignedProviderId || null) : null,
+    });
+    res.status(201).json({ message: 'Admin user created', user: user.toSafeObject() });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};

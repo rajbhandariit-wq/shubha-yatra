@@ -54,6 +54,15 @@ module.exports = (sequelize) => {
       allowNull: true,
       defaultValue: [],
     },
+    adminRole: {
+      type: DataTypes.ENUM('super_admin', 'manager', 'operator'),
+      allowNull: true,
+      defaultValue: null,
+    },
+    assignedProviderId: {
+      type: DataTypes.UUID,
+      allowNull: true,
+    },
     resetPasswordToken: {
       type: DataTypes.STRING,
       allowNull: true,

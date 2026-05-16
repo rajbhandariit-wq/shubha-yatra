@@ -37,6 +37,10 @@ import AdminReports from './pages/admin/Reports';
 import AdminBookings from './pages/admin/Bookings';
 import AdminBilling from './pages/admin/Billing';
 import BatchDetail from './pages/admin/BatchDetail';
+import AdminSchedules from './pages/admin/Schedules';
+import AdminRoutes from './pages/admin/AdminRoutes';
+import AdminProviders from './pages/admin/Providers';
+import AdminSettings from './pages/admin/Settings';
 
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
@@ -111,6 +115,10 @@ function AppRoutes() {
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin/users" element={<ProtectedRoute roles={['admin']}><AdminUsers /></ProtectedRoute>} />
       <Route path="/admin/bookings" element={<ProtectedRoute roles={['admin']}><AdminBookings /></ProtectedRoute>} />
+      <Route path="/admin/schedules" element={<ProtectedRoute roles={['admin']}><AdminSchedules /></ProtectedRoute>} />
+      <Route path="/admin/schedules/routes" element={<ProtectedRoute roles={['admin']}><AdminRoutes /></ProtectedRoute>} />
+      <Route path="/admin/providers" element={<ProtectedRoute roles={['admin']}><AdminProviders /></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute roles={['admin']}><AdminSettings /></ProtectedRoute>} />
       <Route path="/admin/reports" element={<ProtectedRoute roles={['admin']}><AdminReports /></ProtectedRoute>} />
       <Route path="/admin/billing" element={<ProtectedRoute roles={['admin']}><AdminBilling /></ProtectedRoute>} />
       <Route path="/admin/billing/batches/:id" element={<ProtectedRoute roles={['admin']}><BatchDetail /></ProtectedRoute>} />

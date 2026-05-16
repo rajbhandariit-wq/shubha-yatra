@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import AdminLayout from '../../components/AdminLayout';
 import { billingAPI } from '../../services/api';
+import useAdminPerms from '../../hooks/useAdminPerms';
 import toast from 'react-hot-toast';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ function DashboardTab() {
 }
 
 // ─── TAB: Operators ───────────────────────────────────────────────────────────
-function OperatorsTab() {
+function OperatorsTab({ providerScope, readonly }) {
   const [operators, setOperators] = useState([]);
   const [loading, setLoading]     = useState(true);
   const [expanded, setExpanded]   = useState(null);
@@ -140,10 +141,14 @@ function OperatorsTab() {
   const load = useCallback(() => {
     setLoading(true);
     billingAPI.getOperators()
-      .then(r => setOperators(r.data.operators || []))
+      .then(r => {
+        let ops = r.data.operators || [];
+        if (providerScope) ops = ops.filter(o => o.provider.id === providerScope);
+        setOperators(ops);
+      })
       .catch(() => toast.error('Failed'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [providerScope]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -208,10 +213,12 @@ function OperatorsTab() {
               <div className="text-center"><p className="font-bold text-green-600">{fmt(b?.totalPaid)}</p><p className="text-xs text-gray-400">Total Paid</p></div>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={(e) => { e.stopPropagation(); generateBatch(p.id); }}
-                className="text-xs px-2.5 py-1 bg-nepal-blue text-white rounded-lg hover:bg-blue-700 flex items-center gap-1">
-                <Plus className="h-3 w-3" /> Batch
-              </button>
+              {!readonly && (
+                <button onClick={(e) => { e.stopPropagation(); generateBatch(p.id); }}
+                  className="text-xs px-2.5 py-1 bg-nepal-blue text-white rounded-lg hover:bg-blue-700 flex items-center gap-1">
+                  <Plus className="h-3 w-3" /> Batch
+                </button>
+              )}
               {expanded === p.id ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
             </div>
           </div>
@@ -254,10 +261,12 @@ function OperatorsTab() {
                   {b?.bankDetails?.accountNumber && (
                     <div><span className="text-gray-400">Account:</span> <span className="font-medium">{b.bankDetails.accountNumber}</span></div>
                   )}
-                  <button onClick={() => startEdit({ provider: p, balance: b })}
-                    className="ml-auto text-xs px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center gap-1">
-                    <Settings className="h-3 w-3" /> Edit Settings
-                  </button>
+                  {!readonly && (
+                    <button onClick={() => startEdit({ provider: p, balance: b })}
+                      className="ml-auto text-xs px-3 py-1 border border-gray-200 rounded-lg hover:bg-gray-50 flex items-center gap-1">
+                      <Settings className="h-3 w-3" /> Edit Settings
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -270,11 +279,11 @@ function OperatorsTab() {
 }
 
 // ─── TAB: Transactions ────────────────────────────────────────────────────────
-function TransactionsTab() {
+function TransactionsTab({ providerScope }) {
   const [txs, setTxs]       = useState([]);
   const [total, setTotal]   = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', providerId: '', from: '', to: '', page: 1 });
+  const [filters, setFilters] = useState({ status: '', providerId: providerScope || '', from: '', to: '', page: 1 });
 
   const load = useCallback(() => {
     setLoading(true);
@@ -306,7 +315,7 @@ function TransactionsTab() {
             }
           </div>
         ))}
-        <button onClick={() => setFilters({ status: '', providerId: '', from: '', to: '', page: 1 })} className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Clear</button>
+        <button onClick={() => setFilters({ status: '', providerId: providerScope || '', from: '', to: '', page: 1 })} className="py-1.5 px-3 border border-gray-200 rounded-lg text-sm hover:bg-gray-50">Clear</button>
         <span className="ml-auto text-xs text-gray-400 self-end">{total} records</span>
       </div>
 
@@ -349,29 +358,33 @@ function TransactionsTab() {
 }
 
 // ─── TAB: Payouts ─────────────────────────────────────────────────────────────
-function PayoutsTab() {
+function PayoutsTab({ providerScope, readonly }) {
   const [batches, setBatches] = useState([]);
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [genModal, setGenModal] = useState(false);
-  const [genForm, setGenForm]   = useState({ providerId: '', periodStart: '', periodEnd: '' });
+  const [genForm, setGenForm]   = useState({ providerId: providerScope || '', periodStart: '', periodEnd: '' });
   const [providers, setProviders] = useState([]);
 
   const load = useCallback(() => {
     setLoading(true);
-    const params = statusFilter ? { status: statusFilter } : {};
+    const params = {};
+    if (statusFilter) params.status = statusFilter;
+    if (providerScope) params.providerId = providerScope;
     billingAPI.getBatches(params)
       .then(r => { setBatches(r.data.batches || []); setTotal(r.data.total || 0); })
       .catch(() => toast.error('Failed'))
       .finally(() => setLoading(false));
-  }, [statusFilter]);
+  }, [statusFilter, providerScope]);
 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    billingAPI.getOperators().then(r => setProviders(r.data.operators || [])).catch(() => {});
-  }, []);
+    if (!readonly) {
+      billingAPI.getOperators().then(r => setProviders(r.data.operators || [])).catch(() => {});
+    }
+  }, [readonly]);
 
   const generateBatch = async () => {
     try {
@@ -409,10 +422,12 @@ function PayoutsTab() {
           ))}
         </select>
         <span className="text-xs text-gray-400">{total} batches</span>
-        <button onClick={() => setGenModal(true)}
-          className="ml-auto btn-primary text-sm py-2 flex items-center gap-2">
-          <Plus className="h-4 w-4" /> Generate Batch
-        </button>
+        {!readonly && (
+          <button onClick={() => setGenModal(true)}
+            className="ml-auto btn-primary text-sm py-2 flex items-center gap-2">
+            <Plus className="h-4 w-4" /> Generate Batch
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
@@ -440,13 +455,13 @@ function PayoutsTab() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 flex-wrap">
                         <Link to={`/admin/billing/batches/${b.id}`} className="p-1.5 text-gray-400 hover:text-nepal-blue hover:bg-blue-50 rounded-lg" title="View"><Eye className="h-4 w-4" /></Link>
-                        {['draft', 'pending_approval'].includes(b.status) && (
+                        {!readonly && ['draft', 'pending_approval'].includes(b.status) && (
                           <button onClick={() => quickAction(b.id, 'approve')} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg" title="Approve"><CheckCircle className="h-4 w-4" /></button>
                         )}
-                        {b.status === 'approved' && (
+                        {!readonly && b.status === 'approved' && (
                           <button onClick={() => quickAction(b.id, 'mark-paid')} className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Mark Paid"><DollarSign className="h-4 w-4" /></button>
                         )}
-                        {['draft', 'pending_approval', 'approved'].includes(b.status) && (
+                        {!readonly && ['draft', 'pending_approval', 'approved'].includes(b.status) && (
                           <button onClick={() => quickAction(b.id, 'reject')} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg" title="Reject"><XCircle className="h-4 w-4" /></button>
                         )}
                         <button onClick={async () => {
@@ -472,7 +487,7 @@ function PayoutsTab() {
       </div>
 
       {/* Generate Batch Modal */}
-      {genModal && (
+      {genModal && !readonly && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2"><Plus className="h-5 w-5 text-nepal-blue" /> Generate Payout Batch</h2>
@@ -557,22 +572,27 @@ function SettingsTab() {
 }
 
 // ─── Main Billing Page ────────────────────────────────────────────────────────
-const TABS = [
-  { id: 'dashboard',    label: 'Dashboard',    icon: BarChart2   },
-  { id: 'operators',    label: 'Operators',    icon: Users       },
-  { id: 'transactions', label: 'Transactions', icon: DollarSign  },
-  { id: 'payouts',      label: 'Payouts',      icon: Banknote    },
-  { id: 'settings',     label: 'Settings',     icon: Settings    },
+const ALL_TABS = [
+  { id: 'dashboard',    label: 'Dashboard',    icon: BarChart2,  roles: ['super_admin', 'manager'] },
+  { id: 'operators',    label: 'Operators',    icon: Users,      roles: ['super_admin', 'manager', 'operator'] },
+  { id: 'transactions', label: 'Transactions', icon: DollarSign, roles: ['super_admin', 'manager', 'operator'] },
+  { id: 'payouts',      label: 'Payouts',      icon: Banknote,   roles: ['super_admin', 'manager', 'operator'] },
+  { id: 'settings',     label: 'Settings',     icon: Settings,   roles: ['super_admin', 'manager'] },
 ];
 
 export default function AdminBilling() {
-  const [tab, setTab] = useState('dashboard');
+  const { adminRole, readonly, assignedProviderId } = useAdminPerms();
+  const visibleTabs = ALL_TABS.filter(t => t.roles.includes(adminRole));
+  const defaultTab  = adminRole === 'operator' ? 'operators' : 'dashboard';
+  const [tab, setTab] = useState(defaultTab);
+
+  const providerScope = assignedProviderId || null;
 
   return (
     <AdminLayout title="Billing & Payouts">
       {/* Tab bar */}
       <div className="flex gap-1 bg-white rounded-2xl shadow-sm p-1.5 mb-6 overflow-x-auto">
-        {TABS.map(({ id, label, icon: Icon }) => (
+        {visibleTabs.map(({ id, label, icon: Icon }) => (
           <button key={id} onClick={() => setTab(id)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${
               tab === id ? 'bg-nepal-blue text-white shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
@@ -583,9 +603,9 @@ export default function AdminBilling() {
       </div>
 
       {tab === 'dashboard'    && <DashboardTab />}
-      {tab === 'operators'    && <OperatorsTab />}
-      {tab === 'transactions' && <TransactionsTab />}
-      {tab === 'payouts'      && <PayoutsTab />}
+      {tab === 'operators'    && <OperatorsTab providerScope={providerScope} readonly={readonly} />}
+      {tab === 'transactions' && <TransactionsTab providerScope={providerScope} />}
+      {tab === 'payouts'      && <PayoutsTab providerScope={providerScope} readonly={readonly} />}
       {tab === 'settings'     && <SettingsTab />}
     </AdminLayout>
   );
