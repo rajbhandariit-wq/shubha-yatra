@@ -103,7 +103,7 @@ const shareTicket = async () => {
             <div className="relative">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <Bus className="h-7 w-7" />
+                  <img src="/images/Android_logo_new.png" alt="Shubha Yatra" className="h-10 w-auto object-contain drop-shadow" />
                   <div>
                     <p className="font-bold text-xl">Shubha Yatra</p>
                     <p className="text-blue-200 text-sm font-nepali">शुभ यात्रा</p>

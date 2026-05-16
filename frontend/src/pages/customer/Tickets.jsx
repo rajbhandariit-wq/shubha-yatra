@@ -16,7 +16,7 @@ function TicketCard({ booking, label, accentClass }) {
         <div className="absolute inset-0 opacity-10 font-nepali text-7xl font-bold flex items-center justify-center pointer-events-none">शुभ</div>
         <div className="relative flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Bus className="h-6 w-6" />
+            <img src="/images/Android_logo_new.png" alt="Shubha Yatra" className="h-9 w-auto object-contain drop-shadow" />
             <div>
               <p className="font-bold text-lg">Shubha Yatra</p>
               <p className="text-white/70 text-xs font-nepali">{label}</p>
