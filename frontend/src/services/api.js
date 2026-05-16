@@ -143,6 +143,8 @@ export const adminAPI = {
   getPendingBookings: () => api.get('/admin/bookings/pending'),
   approveBooking: (id) => api.put(`/admin/bookings/${id}/approve`),
   rejectBooking: (id, data) => api.put(`/admin/bookings/${id}/reject`, data),
+  // User profile editing (with uniqueness check)
+  updateUserProfile: (id, data)    => api.put(`/admin/users/${id}/profile`, data),
   // RBAC — admin user management
   createAdminUser: (data)          => api.post('/admin/users/admin', data),
   setAdminRole:    (id, data)      => api.put(`/admin/users/${id}/admin-role`, data),

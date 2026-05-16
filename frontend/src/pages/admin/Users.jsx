@@ -37,18 +37,16 @@ export default function AdminUsers() {
 
   // Admin role management
   const [createAdminModal, setCreateAdminModal] = useState(false);
-  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager', assignedProviderId: '' });
+  const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager' });
   const [createSaving, setCreateSaving] = useState(false);
-  const [editRoleModal, setEditRoleModal] = useState(null); // user object
-  const [editRoleForm, setEditRoleForm] = useState({ adminRole: '', assignedProviderId: '' });
+  const [editRoleModal, setEditRoleModal] = useState(null);
+  const [editRoleForm, setEditRoleForm] = useState({ adminRole: '' });
   const [editRoleSaving, setEditRoleSaving] = useState(false);
-  const [providers, setProviders] = useState([]);
 
-  useEffect(() => {
-    if (isSuperAdmin) {
-      adminAPI.getAllProviders({ limit: 100 }).then(r => setProviders(r.data.providers || [])).catch(() => {});
-    }
-  }, [isSuperAdmin]);
+  // Edit customer/provider profile
+  const [editUserModal, setEditUserModal] = useState(null);
+  const [editUserForm, setEditUserForm] = useState({ name: '', email: '', phoneNumber: '' });
+  const [editUserSaving, setEditUserSaving] = useState(false);
 
   const load = (params = {}) => {
     setLoading(true);
@@ -84,7 +82,7 @@ export default function AdminUsers() {
       await adminAPI.createAdminUser(createForm);
       toast.success('Admin user created');
       setCreateAdminModal(false);
-      setCreateForm({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager', assignedProviderId: '' });
+      setCreateForm({ name: '', email: '', password: '', phoneNumber: '', adminRole: 'manager' });
       load();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
     finally { setCreateSaving(false); }
@@ -94,12 +92,29 @@ export default function AdminUsers() {
     e.preventDefault();
     setEditRoleSaving(true);
     try {
-      await adminAPI.setAdminRole(editRoleModal.id, editRoleForm);
+      await adminAPI.setAdminRole(editRoleModal.id, { adminRole: editRoleForm.adminRole });
       toast.success('Admin role updated');
       setEditRoleModal(null);
       load({ search, role: roleFilter });
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
     finally { setEditRoleSaving(false); }
+  };
+
+  const openEditUser = (user) => {
+    setEditUserModal(user);
+    setEditUserForm({ name: user.name || '', email: user.email || '', phoneNumber: user.phoneNumber || '' });
+  };
+
+  const handleEditUser = async (e) => {
+    e.preventDefault();
+    setEditUserSaving(true);
+    try {
+      await adminAPI.updateUserProfile(editUserModal.id, editUserForm);
+      toast.success('Profile updated');
+      setEditUserModal(null);
+      load({ search, role: roleFilter });
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+    finally { setEditUserSaving(false); }
   };
 
   const handleResetPassword = async (e) => {
@@ -217,6 +232,9 @@ export default function AdminUsers() {
                           </button>
                           {u.role !== 'admin' && (
                             <>
+                              <button onClick={() => openEditUser(u)} title="Edit Profile" className="p-1.5 text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors">
+                                <Edit2 className="h-4 w-4" />
+                              </button>
                               <button onClick={() => { setResetModal(u); setNewPassword(''); }} title="Reset Password" className="p-1.5 text-gray-400 hover:text-nepal-blue hover:bg-blue-50 rounded-lg transition-colors">
                                 <Lock className="h-4 w-4" />
                               </button>
@@ -321,6 +339,49 @@ export default function AdminUsers() {
         </div>
       )}
 
+      {/* Edit User Profile Modal */}
+      {editUserModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-lg font-bold flex items-center gap-2"><Edit2 className="h-5 w-5 text-teal-600" /> Edit Profile</h2>
+              <button onClick={() => setEditUserModal(null)}><X className="h-5 w-5 text-gray-400" /></button>
+            </div>
+            <form onSubmit={handleEditUser} className="p-6 space-y-4">
+              <div className="bg-gray-50 rounded-xl p-3 text-sm">
+                <p className="text-gray-500 text-xs">Editing profile for:</p>
+                <p className="font-semibold text-gray-800">{editUserModal.name}</p>
+                <p className="text-gray-400 text-xs capitalize">{editUserModal.role}</p>
+              </div>
+              <div>
+                <label className="label text-xs">Full Name *</label>
+                <input type="text" value={editUserForm.name}
+                  onChange={e => setEditUserForm({ ...editUserForm, name: e.target.value })}
+                  className="input-field" required />
+              </div>
+              <div>
+                <label className="label text-xs">Email *</label>
+                <input type="email" value={editUserForm.email}
+                  onChange={e => setEditUserForm({ ...editUserForm, email: e.target.value })}
+                  className="input-field" required />
+                <p className="text-xs text-gray-400 mt-1">Must be unique — error shown if already registered</p>
+              </div>
+              <div>
+                <label className="label text-xs">Phone Number</label>
+                <input type="text" value={editUserForm.phoneNumber}
+                  onChange={e => setEditUserForm({ ...editUserForm, phoneNumber: e.target.value })}
+                  className="input-field" placeholder="Leave blank to keep current" />
+                <p className="text-xs text-gray-400 mt-1">Must be unique — error shown if already in use</p>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditUserModal(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={editUserSaving} className="flex-1 btn-primary">{editUserSaving ? 'Saving...' : 'Save Changes'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Create Admin User Modal */}
       {createAdminModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
@@ -340,20 +401,11 @@ export default function AdminUsers() {
               <div>
                 <label className="label text-xs">Admin Role *</label>
                 <select value={createForm.adminRole} onChange={e => setCreateForm({ ...createForm, adminRole: e.target.value })} className="input-field">
+                  <option value="operator">Operator</option>
                   <option value="manager">Manager</option>
-                  <option value="operator">Operator (linked to provider)</option>
                   <option value="super_admin">Super Admin</option>
                 </select>
               </div>
-              {createForm.adminRole === 'operator' && (
-                <div>
-                  <label className="label text-xs">Assigned Provider *</label>
-                  <select value={createForm.assignedProviderId} onChange={e => setCreateForm({ ...createForm, assignedProviderId: e.target.value })} className="input-field" required>
-                    <option value="">Select provider...</option>
-                    {providers.map(p => <option key={p.id} value={p.id}>{p.companyName || p.name}</option>)}
-                  </select>
-                </div>
-              )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setCreateAdminModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={createSaving} className="flex-1 btn-primary">{createSaving ? 'Creating...' : 'Create'}</button>
@@ -378,18 +430,9 @@ export default function AdminUsers() {
                 <select value={editRoleForm.adminRole} onChange={e => setEditRoleForm({ ...editRoleForm, adminRole: e.target.value })} className="input-field">
                   <option value="super_admin">Super Admin</option>
                   <option value="manager">Manager</option>
-                  <option value="operator">Operator (linked to provider)</option>
+                  <option value="operator">Operator</option>
                 </select>
               </div>
-              {editRoleForm.adminRole === 'operator' && (
-                <div>
-                  <label className="label text-xs">Assigned Provider</label>
-                  <select value={editRoleForm.assignedProviderId} onChange={e => setEditRoleForm({ ...editRoleForm, assignedProviderId: e.target.value })} className="input-field">
-                    <option value="">Select provider...</option>
-                    {providers.map(p => <option key={p.id} value={p.id}>{p.companyName || p.name}</option>)}
-                  </select>
-                </div>
-              )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setEditRoleModal(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg hover:bg-gray-50">Cancel</button>
                 <button type="submit" disabled={editRoleSaving} className="flex-1 btn-primary">{editRoleSaving ? 'Saving...' : 'Save'}</button>

@@ -13,13 +13,4 @@ const requireAdminRole = (...roles) => (req, res, next) => {
   next();
 };
 
-// Middleware: for operator-type admins, inject req.providerScope = their assignedProviderId
-const withProviderScope = (req, res, next) => {
-  const r = getEffectiveAdminRole(req.user);
-  if (r === 'operator' && req.user.assignedProviderId) {
-    req.providerScope = req.user.assignedProviderId;
-  }
-  next();
-};
-
-module.exports = { getEffectiveAdminRole, requireAdminRole, withProviderScope };
+module.exports = { getEffectiveAdminRole, requireAdminRole };

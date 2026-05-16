@@ -259,7 +259,6 @@ exports.rejectBooking = async (req, res) => {
 exports.getAllBookingsAdmin = async (req, res) => {
   try {
     const { search, status, paymentMethod, providerId, from, to, dateType = 'booking', page = 1, limit = 20 } = req.query;
-    const providerScope = req.providerScope;
 
     const where = {};
     if (status)        where.bookingStatus  = status;
@@ -278,8 +277,7 @@ exports.getAllBookingsAdmin = async (req, res) => {
     }
 
     const busWhere = {};
-    if (providerScope)      busWhere.providerId = providerScope;
-    else if (providerId)    busWhere.providerId = providerId;
+    if (providerId) busWhere.providerId = providerId;
     const hasBusFilter = Object.keys(busWhere).length > 0;
 
     const scheduleWhere = {};
@@ -315,15 +313,13 @@ exports.getAllBookingsAdmin = async (req, res) => {
 exports.getAllSchedulesAdmin = async (req, res) => {
   try {
     const { search, from, to, providerId, status, page = 1, limit = 20 } = req.query;
-    const providerScope = req.providerScope;
 
     const scheduleWhere = {};
     if (status) scheduleWhere.status = status;
     if (from || to) scheduleWhere.travelDate = { [Op.between]: [from || '2020-01-01', to || '2099-12-31'] };
 
     const busWhere = {};
-    if (providerScope)   busWhere.providerId = providerScope;
-    else if (providerId) busWhere.providerId = providerId;
+    if (providerId) busWhere.providerId = providerId;
     const hasBusFilter = Object.keys(busWhere).length > 0;
 
     const routeWhere = {};
@@ -341,7 +337,6 @@ exports.getAllSchedulesAdmin = async (req, res) => {
       ],
       order: [['travelDate', 'DESC'], ['departureTime', 'ASC']],
       limit: parseInt(limit), offset: (parseInt(page) - 1) * parseInt(limit),
-      distinct: true, subQuery: false,
     });
 
     res.json({ schedules: result.rows, total: result.count });
@@ -352,12 +347,10 @@ exports.getAllSchedulesAdmin = async (req, res) => {
 exports.getAllRoutesAdmin = async (req, res) => {
   try {
     const { search, providerId, isActive, page = 1, limit = 50 } = req.query;
-    const providerScope = req.providerScope;
 
     const where = {};
     if (isActive !== undefined && isActive !== '') where.isActive = isActive === 'true';
-    if (providerScope)   where.providerId = providerScope;
-    else if (providerId) where.providerId = providerId;
+    if (providerId) where.providerId = providerId;
     if (search) where[Op.or] = [{ source: { [Op.iLike]: `%${search}%` } }, { destination: { [Op.iLike]: `%${search}%` } }];
 
     const result = await Route.findAndCountAll({
@@ -397,24 +390,47 @@ exports.getAllProvidersAdmin = async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
+// ─── Admin profile edit (with email/phone uniqueness check) ──────────────────
+exports.updateUserProfile = async (req, res) => {
+  try {
+    const { name, email, phoneNumber } = req.body;
+    const user = await User.findByPk(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ message: 'Cannot edit admin profiles this way' });
+
+    if (email && email !== user.email) {
+      const dup = await User.findOne({ where: { email, id: { [Op.ne]: user.id } } });
+      if (dup) return res.status(400).json({ message: 'Email already registered' });
+    }
+    if (phoneNumber && phoneNumber !== user.phoneNumber) {
+      const dup = await User.findOne({ where: { phoneNumber, id: { [Op.ne]: user.id } } });
+      if (dup) return res.status(400).json({ message: 'Phone number already in use' });
+    }
+
+    await user.update({
+      name:        name        || user.name,
+      email:       email       || user.email,
+      phoneNumber: phoneNumber !== undefined ? (phoneNumber || null) : user.phoneNumber,
+    });
+    res.json({ message: 'Profile updated', user: user.toSafeObject() });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
 // ─── Admin role management ────────────────────────────────────────────────────
 exports.setAdminRole = async (req, res) => {
   try {
-    const { adminRole, assignedProviderId } = req.body;
+    const { adminRole } = req.body;
     const user = await User.findByPk(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     if (user.role !== 'admin') return res.status(400).json({ message: 'User is not an admin' });
-    await user.update({
-      adminRole: adminRole || null,
-      assignedProviderId: adminRole === 'operator' ? (assignedProviderId || null) : null,
-    });
+    await user.update({ adminRole: adminRole || null });
     res.json({ message: 'Admin role updated', user: user.toSafeObject() });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
 exports.createAdminUser = async (req, res) => {
   try {
-    const { name, email, password, phoneNumber, adminRole = 'manager', assignedProviderId } = req.body;
+    const { name, email, password, phoneNumber, adminRole = 'manager' } = req.body;
     if (!name || !email || !password) return res.status(400).json({ message: 'name, email and password are required' });
     if (password.length < 6) return res.status(400).json({ message: 'Password must be at least 6 characters' });
     const exists = await User.findOne({ where: { email } });
@@ -422,7 +438,6 @@ exports.createAdminUser = async (req, res) => {
     const user = await User.create({
       name, email, password, phoneNumber: phoneNumber || null,
       role: 'admin', adminRole: adminRole || 'manager',
-      assignedProviderId: adminRole === 'operator' ? (assignedProviderId || null) : null,
     });
     res.status(201).json({ message: 'Admin user created', user: user.toSafeObject() });
   } catch (err) { res.status(500).json({ message: err.message }); }

@@ -9,9 +9,8 @@ export default function useAdminPerms() {
     isManager:    adminRole === 'manager' || adminRole === 'super_admin',
     isOperator:   adminRole === 'operator',
     canDelete:    adminRole === 'super_admin',
-    canCreate:    adminRole !== 'operator',
-    canEdit:      adminRole !== 'operator',
-    readonly:     adminRole === 'operator',
-    assignedProviderId: user?.assignedProviderId || null,
+    canCreate:    true,
+    canEdit:      true,
+    readonly:     false,
   };
 }
