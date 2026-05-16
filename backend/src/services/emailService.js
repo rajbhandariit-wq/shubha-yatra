@@ -28,9 +28,9 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
         <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
-      <div style="text-align:center; margin-top:20px;">
-        <p style="font-size:12px; color:#666;">Scan for ticket verification</p>
-        <img src="${qrCode}" style="width:160px; height:160px;" />
+      <div style="text-align:center; margin-top:8px; padding-bottom:8px;">
+        <p style="font-size:12px; color:#666; margin:0 0 6px;">Scan for ticket verification</p>
+        <img src="${qrCode}" style="width:140px; height:140px;" />
       </div>
       <div style="padding: 24px;">
         <h2 style="color:#DC143C;">Booking Confirmed! ✅</h2>
