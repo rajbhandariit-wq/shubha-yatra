@@ -23,17 +23,28 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
-      <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px 20px 14px; text-align: center; color: white;">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 8px;" />` : ''}
+      <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
+        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 6px;" />` : ''}
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
-        <p style="margin:4px 0 12px; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
-        <p style="font-size:11px; opacity:0.75; margin:0 0 4px;">Scan for ticket verification</p>
-        <img src="${qrCode}" style="width:130px; height:130px; border-radius:8px;" />
+        <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
-      <div style="padding: 24px;">
-        <h2 style="color:#DC143C;">Booking Confirmed! ✅</h2>
-        <p>Dear <strong>${name}</strong>,</p>
-        <p>Your ticket has been confirmed. Safe travels!</p>
+      <div style="padding: 20px 24px 0;">
+        <table style="width:100%; border-collapse:collapse;">
+          <tr>
+            <td style="vertical-align:middle; padding-right:16px;">
+              <h2 style="color:#DC143C; margin:0 0 6px;">Booking Confirmed! ✅</h2>
+              <p style="margin:0 0 4px;">Dear <strong>${name}</strong>,</p>
+              <p style="margin:0; color:#555; font-size:14px;">Your ticket has been confirmed. Safe travels!</p>
+            </td>
+            <td style="vertical-align:middle; text-align:center; white-space:nowrap; width:150px;">
+              <img src="${qrCode}" style="width:130px; height:130px; border-radius:8px; display:block;" />
+              <p style="font-size:10px; color:#888; margin:4px 0 0;">Scan to verify</p>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div style="padding: 12px 24px 24px;">
+
         <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold; width:40%;">Ticket No.</td><td style="padding:8px; font-family:monospace; font-weight:bold;">${ticketNumber}</td></tr>
           <tr><td style="padding:8px; font-weight:bold;">Route</td><td style="padding:8px;">${route}</td></tr>
@@ -48,6 +59,7 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
         </table>
         <p style="color:#666; font-size:12px; margin-top:16px;">Please arrive 15 minutes before departure. शुभ यात्रा! 🙏</p>
       </div>
+
       <div style="background:#003893; color:white; text-align:center; padding:12px; font-size:12px;">
         © 2025 Shubha Yatra | Nepal's Trusted Bus Booking Platform
       </div>
