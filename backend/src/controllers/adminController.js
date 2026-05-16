@@ -330,7 +330,7 @@ exports.getAllSchedulesAdmin = async (req, res) => {
       where: scheduleWhere,
       include: [
         { model: Bus, as: 'bus', required: hasBusFilter, where: hasBusFilter ? busWhere : undefined,
-          attributes: ['id', 'name', 'registrationNumber', 'busType', 'totalSeats'],
+          attributes: ['id', 'name', 'registrationNumber', 'type', 'totalSeats'],
           include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName'] }] },
         { model: Route, as: 'route', required: hasRouteFilter, where: hasRouteFilter ? routeWhere : undefined,
           attributes: ['id', 'source', 'destination', 'estimatedDuration'] },

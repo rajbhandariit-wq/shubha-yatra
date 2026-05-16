@@ -98,6 +98,7 @@ export default function AdminSchedules() {
                     <td className="px-4 py-3 text-xs">
                       <p className="font-medium">{s.bus?.name}</p>
                       <p className="text-gray-400">{s.bus?.registrationNumber}</p>
+                      {s.bus?.type && <p className="text-gray-300 text-xs">{s.bus.type}</p>}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-500">
                       {s.bus?.provider?.companyName || s.bus?.provider?.name || '—'}
