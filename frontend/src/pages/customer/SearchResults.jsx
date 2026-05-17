@@ -8,6 +8,12 @@ import toast from 'react-hot-toast';
 
 const AMENITY_ICONS = { WiFi: Wifi, AC: Wind, 'USB Charging': Zap };
 
+const CATEGORY_META = {
+  standard: { label: 'Standard',  icon: '🚌', color: 'bg-blue-100 text-blue-700' },
+  sofa:     { label: 'Sofa',      icon: '🛋️', color: 'bg-purple-100 text-purple-700' },
+  micro:    { label: 'Micro',     icon: '🚐', color: 'bg-green-100 text-green-700' },
+};
+
 function addDays(dateStr, n) {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + n);
@@ -66,8 +72,12 @@ export default function SearchResults() {
   const activeSchedules = activeTab === 'outbound' ? outboundSchedules : returnSchedules;
   const isLoading = activeTab === 'outbound' ? outboundLoading : returnLoading;
 
-  const busTypes = [...new Set(activeSchedules.map(s => s.bus?.type))].filter(Boolean);
-  const filtered = activeSchedules.filter(s => filter === 'all' || s.bus?.type === filter);
+  const busTypes = [...new Set(activeSchedules.map(s => s.bus?.seatLayout?.busCategory || s.bus?.type))].filter(Boolean);
+  const filtered = activeSchedules.filter(s => {
+    if (filter === 'all') return true;
+    const cat = s.bus?.seatLayout?.busCategory;
+    return cat ? cat === filter : s.bus?.type === filter;
+  });
 
   const goToDate = (newDateStr) => {
     const p = new URLSearchParams({ source, destination, date: activeTab === 'outbound' ? newDateStr : date });
@@ -82,17 +92,25 @@ export default function SearchResults() {
     const bus = schedule.bus;
     const route = schedule.route;
     const provider = bus?.provider;
+    const catKey = bus?.seatLayout?.busCategory;
+    const cat = catKey ? CATEGORY_META[catKey] : null;
     return (
       <div className="bg-white rounded-2xl border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-nepal-blue to-blue-600 rounded-2xl flex items-center justify-center shrink-0">
-              <Bus className="h-7 w-7 text-white" />
+            <div className="w-14 h-14 bg-gradient-to-br from-nepal-blue to-blue-600 rounded-2xl flex items-center justify-center shrink-0 text-2xl">
+              {cat ? cat.icon : <Bus className="h-7 w-7 text-white" />}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-bold text-gray-800">{bus?.name}</h3>
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${bus?.type === 'AC' || bus?.type === 'Sleeper' || bus?.type === 'Deluxe' || bus?.type === 'Super-Deluxe' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>{bus?.type}</span>
+                {cat ? (
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex items-center gap-1 ${cat.color}`}>
+                    {cat.icon} {cat.label} Bus
+                  </span>
+                ) : (
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">{bus?.type}</span>
+                )}
               </div>
               <p className="text-xs text-gray-400 mt-0.5">{provider?.companyName || provider?.name} • {bus?.registrationNumber}</p>
               <div className="flex gap-2 mt-2 flex-wrap">
@@ -228,12 +246,15 @@ export default function SearchResults() {
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <Filter className="h-4 w-4 text-gray-500" />
           <span className="text-sm text-gray-600 font-medium">Filter:</span>
-          {['all', ...busTypes].map(t => (
-            <button key={t} onClick={() => setFilter(t)}
-              className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${filter === t ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'}`}>
-              {t === 'all' ? 'All Buses' : t}
-            </button>
-          ))}
+          {['all', ...busTypes].map(t => {
+            const m = CATEGORY_META[t];
+            return (
+              <button key={t} onClick={() => setFilter(t)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${filter === t ? 'bg-primary-500 text-white border-primary-500' : 'bg-white text-gray-600 border-gray-200 hover:border-primary-300'}`}>
+                {t === 'all' ? 'All Buses' : m ? `${m.icon} ${m.label}` : t}
+              </button>
+            );
+          })}
         </div>
 
         {isLoading ? (
