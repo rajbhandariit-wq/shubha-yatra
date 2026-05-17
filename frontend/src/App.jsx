@@ -49,6 +49,12 @@ import ResetPassword from './components/ResetPassword';
 
 const AUTH_ROUTES = ['/login', '/register', '/forgot-password', '/reset-password'];
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 function BackButtonHandler() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -83,6 +89,7 @@ function AppRoutes() {
   const { user } = useAuth();
   return (
     <>
+    <ScrollToTop />
     <BackButtonHandler />
     <Routes>
       <Route path="/" element={<Home />} />
