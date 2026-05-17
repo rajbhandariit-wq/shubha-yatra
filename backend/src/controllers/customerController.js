@@ -53,19 +53,25 @@ exports.getSeats = async (req, res) => {
     });
     const bookedSeats = bookings.flatMap(b => b.seats);
 
-    // Generate seat map
     const bus = schedule.bus;
-    const totalSeats = bus.totalSeats;
-    const layout = bus.seatLayout || { rows: 10, seatsPerRow: 4, layout: '2-2' };
-    
-    const seats = [];
-    for (let i = 1; i <= totalSeats; i++) {
-      seats.push({
-        number: i,
-        label: `${i}`,
-        status: bookedSeats.includes(i) ? 'booked' : 'available',
-        type: i <= 4 ? 'premium' : 'regular'
-      });
+    const storedLayout = bus.seatLayout;
+    let seats;
+    let layout;
+
+    if (storedLayout?.seats?.length > 0) {
+      // New structured format: use stored seat layout with live booking status applied
+      seats = storedLayout.seats.map(s => ({
+        ...s,
+        status: bookedSeats.includes(s.number) ? 'booked' : 'available',
+      }));
+      layout = { leftCols: storedLayout.leftCols, rightCols: storedLayout.rightCols };
+    } else {
+      // Legacy format: generate flat numbered seats
+      seats = [];
+      for (let i = 1; i <= bus.totalSeats; i++) {
+        seats.push({ number: i, label: `${i}`, status: bookedSeats.includes(i) ? 'booked' : 'available' });
+      }
+      layout = null;
     }
 
     res.json({ schedule, seats, bookedSeats, layout });

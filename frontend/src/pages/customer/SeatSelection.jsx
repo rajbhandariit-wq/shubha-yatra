@@ -145,7 +145,7 @@ export default function SeatSelection() {
               </div>
               <p className="text-sm text-gray-500">{new Date(schedule?.travelDate).toLocaleDateString('en-NP', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
-            <SeatMap seats={seatData?.seats || []} selectedSeats={selectedSeats} onSeatSelect={setSelectedSeats} maxSeats={6} />
+            <SeatMap seats={seatData?.seats || []} layout={seatData?.layout} selectedSeats={selectedSeats} onSeatSelect={setSelectedSeats} maxSeats={6} />
           </div>
 
           {/* Booking summary panel */}

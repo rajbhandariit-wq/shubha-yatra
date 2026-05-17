@@ -493,26 +493,26 @@ exports.getSeatLayout = async (req, res) => {
 
     const bookedSeats = bookings.flatMap(b => b.seats);
 
-    // Generate seat layout
     const bus = schedule.bus;
-    const totalSeats = bus.totalSeats;
-    const layout = bus.seatLayout || { rows: 10, seatsPerRow: 4 };
+    const storedLayout = bus.seatLayout;
+    let seats;
+    let layout;
 
-    const seats = [];
-    for (let i = 1; i <= totalSeats; i++) {
-      seats.push({
-        number: i,
-        status: bookedSeats.includes(i) ? 'booked' : 'available'
-      });
+    if (storedLayout?.seats?.length > 0) {
+      seats = storedLayout.seats.map(s => ({
+        ...s,
+        status: bookedSeats.includes(s.number) ? 'booked' : 'available',
+      }));
+      layout = { leftCols: storedLayout.leftCols, rightCols: storedLayout.rightCols };
+    } else {
+      seats = [];
+      for (let i = 1; i <= bus.totalSeats; i++) {
+        seats.push({ number: i, label: `${i}`, status: bookedSeats.includes(i) ? 'booked' : 'available' });
+      }
+      layout = null;
     }
 
-    res.json({ 
-      schedule, 
-      seats, 
-      bookedSeats, 
-      layout,
-      fare: schedule.fare 
-    });
+    res.json({ schedule, seats, bookedSeats, layout, fare: schedule.fare });
   } catch (err) {
     console.error('Get seat layout error:', err);
     res.status(500).json({ message: err.message });
