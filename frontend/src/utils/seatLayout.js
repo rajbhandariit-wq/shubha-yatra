@@ -5,9 +5,7 @@ export const BUS_CATEGORIES = {
     layoutType: '2-2',
     leftCols: 2,
     rightCols: 2,
-    defaultSeats: 40,
-    minSeats: 20,
-    maxSeats: 60,
+    defaultRows: 10,
   },
   sofa: {
     label: 'Sofa Bus',
@@ -15,9 +13,7 @@ export const BUS_CATEGORIES = {
     layoutType: '2-1',
     leftCols: 2,
     rightCols: 1,
-    defaultSeats: 28,
-    minSeats: 12,
-    maxSeats: 45,
+    defaultRows: 9,
   },
   micro: {
     label: 'Micro Bus',
@@ -25,48 +21,50 @@ export const BUS_CATEGORIES = {
     layoutType: '2-1',
     leftCols: 2,
     rightCols: 1,
-    defaultSeats: 14,
-    minSeats: 8,
-    maxSeats: 22,
+    defaultRows: 5,
   },
 };
 
-// Generate a structured seat layout from a bus category + total seat count.
-// Returns the object to store in Bus.seatLayout.
-export function generateSeatLayout(busCategory, totalSeats) {
-  const cfg = BUS_CATEGORIES[busCategory] || BUS_CATEGORIES.standard;
+/**
+ * Generate a structured seat layout from a flexible config.
+ * @param {object} cfg
+ * @param {string} cfg.busCategory  - 'standard' | 'sofa' | 'micro' | custom
+ * @param {number} cfg.leftCols     - seats on left side per row (1-3)
+ * @param {number} cfg.rightCols    - seats on right side per row (1-3)
+ * @param {number} cfg.regularRows  - number of standard rows
+ * @param {number} cfg.backRowSeats - extra seats in the back row (0 = none)
+ */
+export function generateSeatLayout({ busCategory = 'standard', leftCols = 2, rightCols = 2, regularRows = 10, backRowSeats = 0 }) {
   const seats = [];
   let num = 1;
-  let row = 1;
 
-  while (num <= totalSeats) {
-    for (let col = 0; col < cfg.leftCols && num <= totalSeats; col++) {
-      seats.push({
-        number: num++,
-        row,
-        position: 'left',
-        col,
-        label: `${row}${String.fromCharCode(65 + col)}`,
-      });
+  for (let row = 1; row <= regularRows; row++) {
+    for (let col = 0; col < leftCols; col++) {
+      seats.push({ number: num++, row, position: 'left', col, label: `${row}${String.fromCharCode(65 + col)}` });
     }
-    for (let col = 0; col < cfg.rightCols && num <= totalSeats; col++) {
-      seats.push({
-        number: num++,
-        row,
-        position: 'right',
-        col,
-        label: `${row}${String.fromCharCode(65 + cfg.leftCols + col)}`,
-      });
+    for (let col = 0; col < rightCols; col++) {
+      seats.push({ number: num++, row, position: 'right', col, label: `${row}${String.fromCharCode(65 + leftCols + col)}` });
     }
-    row++;
   }
+
+  if (backRowSeats > 0) {
+    const backRow = regularRows + 1;
+    for (let col = 0; col < backRowSeats; col++) {
+      seats.push({ number: num++, row: backRow, position: 'back', col, label: `B${col + 1}` });
+    }
+  }
+
+  const totalSeats = (leftCols + rightCols) * regularRows + backRowSeats;
 
   return {
     busCategory,
-    layoutType: cfg.layoutType,
-    leftCols: cfg.leftCols,
-    rightCols: cfg.rightCols,
-    rows: row - 1,
+    layoutType: `${leftCols}-${rightCols}`,
+    leftCols,
+    rightCols,
+    regularRows,
+    backRowSeats,
+    rows: regularRows + (backRowSeats > 0 ? 1 : 0),
+    totalSeats,
     seats,
   };
 }

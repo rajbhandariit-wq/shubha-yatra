@@ -1,6 +1,5 @@
 import { Users, CircleDot } from 'lucide-react';
 
-// Renders a seat button. seat may be null (empty slot in partial last row).
 function SeatBtn({ seat, selected, onClick }) {
   if (!seat) return <div className="w-10 h-10" />;
   let cls = 'w-10 h-10 rounded-lg text-xs font-semibold flex items-center justify-center select-none transition-all ';
@@ -51,15 +50,35 @@ export default function SeatMap({
         rowMap[seat.row] = {
           left:  Array(leftCols).fill(null),
           right: Array(rightCols).fill(null),
+          back:  [],
         };
       }
-      rowMap[seat.row][seat.position][seat.col] = seat;
+      if (seat.position === 'back') {
+        rowMap[seat.row].back.push(seat);
+      } else {
+        rowMap[seat.row][seat.position][seat.col] = seat;
+      }
     });
 
     const rowNums = Object.keys(rowMap).map(Number).sort((a, b) => a - b);
 
     return rowNums.map(rowNum => {
       const row = rowMap[rowNum];
+      const isBackRow = row.back.length > 0;
+
+      if (isBackRow) {
+        return (
+          <div key={rowNum} className="flex items-center gap-2">
+            <span className="text-xs text-gray-400 w-5 text-right shrink-0">{rowNum}</span>
+            <div className="flex gap-1.5 flex-wrap">
+              {row.back.map((seat, i) => (
+                <SeatBtn key={i} seat={seat} selected={seat && selectedSeats.includes(seat.number)} onClick={() => seat && handleClick(seat)} />
+              ))}
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div key={rowNum} className="flex items-center gap-2">
           <span className="text-xs text-gray-400 w-5 text-right shrink-0">{rowNum}</span>
@@ -115,8 +134,8 @@ export default function SeatMap({
         <div className="flex items-center gap-2 text-sm"><Users className="h-4 w-4" /> {availableCount} Available</div>
       </div>
 
-      {/* Column header */}
-      {isNewFormat && (
+      {/* Column header — only for regular rows (not back row) */}
+      {isNewFormat && (leftCols + rightCols > 0) && (
         <div className="flex items-center gap-2 mb-2 ml-7">
           <div className="flex gap-1.5">
             {Array.from({ length: leftCols }, (_, i) => (

@@ -6,23 +6,39 @@ import SeatMap from '../../components/SeatMap';
 import { BUS_CATEGORIES, generateSeatLayout } from '../../utils/seatLayout';
 import toast from 'react-hot-toast';
 
-const EMPTY = { name: '', registrationNumber: '', busCategory: 'standard', type: 'Non-AC', totalSeats: 40, amenities: [], seatLayout: null };
+const EMPTY = {
+  name: '', registrationNumber: '', busCategory: 'standard', type: 'Non-AC', amenities: [],
+  leftCols: 2, rightCols: 2, regularRows: 10, backRowSeats: 0, seatLayout: null,
+};
 const ALL_AMENITIES = ['WiFi', 'AC', 'USB Charging', 'Water Bottle', 'Blanket', 'Pillow', 'Sleeper Berth', 'Reclining Seats', 'Fan', 'TV'];
 
-function CategoryCard({ id, cat, selected, onSelect }) {
+function Stepper({ label, value, onDec, onInc, min, max }) {
   return (
-    <button
-      type="button"
-      onClick={() => onSelect(id)}
-      className={`flex-1 rounded-xl border-2 p-4 text-left transition-all ${selected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:border-gray-300'}`}
-    >
-      <div className={`text-sm font-bold mb-1 ${selected ? 'text-primary-700' : 'text-gray-800'}`}>{cat.label}</div>
-      <div className="text-xs text-gray-500">{cat.description}</div>
-      <div className={`mt-2 text-xs font-medium ${selected ? 'text-primary-600' : 'text-gray-400'}`}>
-        Default: {cat.defaultSeats} seats
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-xs text-gray-500">{label}</span>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={onDec} disabled={value <= min}
+          className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40">
+          <Minus className="h-3.5 w-3.5" />
+        </button>
+        <span className="w-8 text-center font-bold text-lg">{value}</span>
+        <button type="button" onClick={onInc} disabled={value >= max}
+          className="w-8 h-8 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-40">
+          <Plus className="h-3.5 w-3.5" />
+        </button>
       </div>
-    </button>
+    </div>
   );
+}
+
+function rebuild(f) {
+  return generateSeatLayout({
+    busCategory: f.busCategory,
+    leftCols: f.leftCols,
+    rightCols: f.rightCols,
+    regularRows: f.regularRows,
+    backRowSeats: f.backRowSeats,
+  });
 }
 
 export default function ProviderBuses() {
@@ -40,48 +56,60 @@ export default function ProviderBuses() {
   useEffect(load, []);
 
   const openAdd = () => {
-    const layout = generateSeatLayout('standard', 40);
-    setForm({ ...EMPTY, seatLayout: layout });
+    const f = { ...EMPTY };
+    setForm({ ...f, seatLayout: rebuild(f) });
     setEditing(null);
     setStep(1);
     setModal(true);
   };
 
   const openEdit = (b) => {
-    const busCategory = b.seatLayout?.busCategory || 'standard';
-    const layout = (b.seatLayout?.seats?.length > 0 ? b.seatLayout : null) || generateSeatLayout(busCategory, b.totalSeats);
-    setForm({
+    const sl = b.seatLayout;
+    const busCategory = sl?.busCategory || 'standard';
+    const leftCols    = sl?.leftCols    ?? 2;
+    const rightCols   = sl?.rightCols   ?? 2;
+    const regularRows = sl?.regularRows ?? 10;
+    const backRowSeats = sl?.backRowSeats ?? 0;
+    const f = {
       name: b.name,
       registrationNumber: b.registrationNumber,
       busCategory,
       type: b.type,
-      totalSeats: b.totalSeats,
       amenities: b.amenities || [],
-      seatLayout: layout,
-    });
+      leftCols, rightCols, regularRows, backRowSeats,
+      seatLayout: sl?.seats?.length > 0 ? sl : rebuild({ busCategory, leftCols, rightCols, regularRows, backRowSeats }),
+    };
+    setForm(f);
     setEditing(b.id);
     setStep(1);
     setModal(true);
   };
 
+  const update = (patch) => {
+    setForm(f => {
+      const next = { ...f, ...patch };
+      next.seatLayout = rebuild(next);
+      return next;
+    });
+  };
+
   const handleCategoryChange = (cat) => {
     const cfg = BUS_CATEGORIES[cat];
-    const layout = generateSeatLayout(cat, cfg.defaultSeats);
-    setForm(f => ({ ...f, busCategory: cat, totalSeats: cfg.defaultSeats, seatLayout: layout }));
+    update({ busCategory: cat, leftCols: cfg.leftCols, rightCols: cfg.rightCols });
   };
 
-  const handleSeatsChange = (val) => {
-    const cfg = BUS_CATEGORIES[form.busCategory] || BUS_CATEGORIES.standard;
-    const n = Math.max(cfg.minSeats, Math.min(cfg.maxSeats, parseInt(val) || cfg.minSeats));
-    const layout = generateSeatLayout(form.busCategory, n);
-    setForm(f => ({ ...f, totalSeats: n, seatLayout: layout }));
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
+  const handleSave = async () => {
     setSaving(true);
     try {
-      const payload = { ...form };
+      const totalSeats = form.seatLayout?.totalSeats || form.seatLayout?.seats?.length || 0;
+      const payload = {
+        name: form.name,
+        registrationNumber: form.registrationNumber,
+        type: form.type,
+        amenities: form.amenities,
+        totalSeats,
+        seatLayout: form.seatLayout,
+      };
       if (editing) { await providerAPI.updateBus(editing, payload); toast.success('Bus updated!'); }
       else { await providerAPI.createBus(payload); toast.success('Bus added!'); }
       setModal(false);
@@ -104,8 +132,8 @@ export default function ProviderBuses() {
     amenities: f.amenities.includes(a) ? f.amenities.filter(x => x !== a) : [...f.amenities, a],
   }));
 
-  const cfg = BUS_CATEGORIES[form.busCategory] || BUS_CATEGORIES.standard;
   const previewSeats = (form.seatLayout?.seats || []).map(s => ({ ...s, status: 'available' }));
+  const totalSeats = form.seatLayout?.totalSeats ?? previewSeats.length;
 
   return (
     <ProviderLayout title="Manage Buses">
@@ -121,7 +149,9 @@ export default function ProviderBuses() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {buses.map(b => {
-            const catLabel = b.seatLayout?.busCategory ? BUS_CATEGORIES[b.seatLayout.busCategory]?.label : null;
+            const sl = b.seatLayout;
+            const layoutLabel = sl?.busCategory ? BUS_CATEGORIES[sl.busCategory]?.label : null;
+            const layoutDetail = sl?.layoutType ? `${sl.layoutType} · ${sl.totalSeats || b.totalSeats} seats` : null;
             return (
               <div key={b.id} className="bg-white rounded-2xl border border-gray-200 hover:shadow-md transition-shadow p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -139,11 +169,11 @@ export default function ProviderBuses() {
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                   <div className="bg-gray-50 rounded-lg px-3 py-1.5">
                     <p className="text-xs text-gray-400">Category</p>
-                    <p className="font-semibold">{catLabel || b.type || '—'}</p>
+                    <p className="font-semibold">{layoutLabel || b.type || '—'}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg px-3 py-1.5">
-                    <p className="text-xs text-gray-400">Seats</p>
-                    <p className="font-semibold">{b.totalSeats}</p>
+                    <p className="text-xs text-gray-400">Layout</p>
+                    <p className="font-semibold">{layoutDetail || `${b.totalSeats} seats`}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-4">
@@ -207,16 +237,6 @@ export default function ProviderBuses() {
                   <input value={form.registrationNumber} onChange={e => setForm(f => ({ ...f, registrationNumber: e.target.value }))}
                     className="input-field" placeholder="BA 1 KHA 1234" required />
                 </div>
-
-                <div>
-                  <label className="label">Bus Category *</label>
-                  <div className="flex gap-3">
-                    {Object.entries(BUS_CATEGORIES).map(([id, cat]) => (
-                      <CategoryCard key={id} id={id} cat={cat} selected={form.busCategory === id} onSelect={handleCategoryChange} />
-                    ))}
-                  </div>
-                </div>
-
                 <div>
                   <label className="label">Amenities</label>
                   <div className="flex flex-wrap gap-2">
@@ -228,7 +248,6 @@ export default function ProviderBuses() {
                     ))}
                   </div>
                 </div>
-
                 <div className="flex gap-3 pt-2">
                   <button type="button" onClick={() => setModal(false)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">Cancel</button>
                   <button type="button"
@@ -244,41 +263,65 @@ export default function ProviderBuses() {
             {/* Step 2 — Seat Layout */}
             {step === 2 && (
               <div className="p-6 space-y-5">
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-gray-700">Number of Seats</span>
-                    <span className="text-xs text-gray-400">{cfg.minSeats}–{cfg.maxSeats} for {cfg.label}</span>
-                  </div>
-                  <div className="flex items-center gap-4 mt-2">
-                    <button type="button"
-                      onClick={() => handleSeatsChange(form.totalSeats - 1)}
-                      disabled={form.totalSeats <= cfg.minSeats}
-                      className="w-9 h-9 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-white disabled:opacity-40">
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <input type="number" value={form.totalSeats}
-                      onChange={e => handleSeatsChange(e.target.value)}
-                      className="w-20 text-center input-field py-2 font-bold text-lg"
-                      min={cfg.minSeats} max={cfg.maxSeats} />
-                    <button type="button"
-                      onClick={() => handleSeatsChange(form.totalSeats + 1)}
-                      disabled={form.totalSeats >= cfg.maxSeats}
-                      className="w-9 h-9 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-white disabled:opacity-40">
-                      <Plus className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm text-gray-500">{cfg.label} · {cfg.layoutType} layout</span>
+
+                {/* Template presets */}
+                <div>
+                  <label className="label">Start from template</label>
+                  <div className="flex gap-2">
+                    {Object.entries(BUS_CATEGORIES).map(([id, cat]) => (
+                      <button key={id} type="button" onClick={() => handleCategoryChange(id)}
+                        className={`flex-1 rounded-xl border-2 py-2 px-3 text-left text-xs transition-all ${form.busCategory === id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 hover:border-gray-300 text-gray-600'}`}>
+                        <div className="font-bold">{cat.label}</div>
+                        <div className="text-gray-400">{cat.description}</div>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
+                {/* Layout controls */}
+                <div className="bg-gray-50 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center gap-6 flex-wrap">
+                    <Stepper label="Left seats/row" value={form.leftCols} min={1} max={3}
+                      onDec={() => update({ leftCols: form.leftCols - 1 })}
+                      onInc={() => update({ leftCols: form.leftCols + 1 })} />
+                    <div className="text-gray-300 text-2xl pb-1">│</div>
+                    <Stepper label="Right seats/row" value={form.rightCols} min={1} max={3}
+                      onDec={() => update({ rightCols: form.rightCols - 1 })}
+                      onInc={() => update({ rightCols: form.rightCols + 1 })} />
+                    <div className="h-10 w-px bg-gray-200" />
+                    <Stepper label="Regular rows" value={form.regularRows} min={1} max={20}
+                      onDec={() => update({ regularRows: form.regularRows - 1 })}
+                      onInc={() => update({ regularRows: form.regularRows + 1 })} />
+                  </div>
+
+                  {/* Back row */}
+                  <div className="border-t border-gray-200 pt-3 flex items-center gap-4 flex-wrap">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input type="checkbox" checked={form.backRowSeats > 0}
+                        onChange={e => update({ backRowSeats: e.target.checked ? 5 : 0 })}
+                        className="w-4 h-4 rounded accent-primary-500" />
+                      <span className="text-sm font-medium text-gray-700">Add back row</span>
+                    </label>
+                    {form.backRowSeats > 0 && (
+                      <Stepper label="Back row seats" value={form.backRowSeats} min={3} max={7}
+                        onDec={() => update({ backRowSeats: form.backRowSeats - 1 })}
+                        onInc={() => update({ backRowSeats: form.backRowSeats + 1 })} />
+                    )}
+                  </div>
+
+                  <div className="text-sm font-semibold text-primary-700">
+                    Total seats: {totalSeats}
+                    <span className="ml-3 text-xs font-normal text-gray-400">
+                      ({form.leftCols}+{form.rightCols}) × {form.regularRows} rows{form.backRowSeats > 0 ? ` + ${form.backRowSeats} back` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Live preview */}
                 <div>
-                  <p className="text-sm font-semibold text-gray-700 mb-3">Seat Preview (as customers will see)</p>
+                  <p className="text-sm font-semibold text-gray-700 mb-3">Preview (as customers will see)</p>
                   {previewSeats.length > 0 && (
-                    <SeatMap
-                      seats={previewSeats}
-                      layout={form.seatLayout}
-                      selectedSeats={[]}
-                      readonly
-                    />
+                    <SeatMap seats={previewSeats} layout={form.seatLayout} selectedSeats={[]} readonly />
                   )}
                 </div>
 
