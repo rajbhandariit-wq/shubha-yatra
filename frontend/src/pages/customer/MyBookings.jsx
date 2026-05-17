@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bus, MapPin, Calendar, ArrowRight, Ticket, XCircle, Eye, Clock, Filter } from 'lucide-react';
+import { CATEGORY_META } from '../../utils/seatLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
@@ -99,6 +100,11 @@ export default function MyBookings() {
                             <span className="flex items-center gap-1"><Calendar className="h-3 w-3" />{schedule?.travelDate}</span>
                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{schedule?.departureTime}</span>
                             <span className="flex items-center gap-1"><Bus className="h-3 w-3" />{bus?.name}</span>
+                            {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] && (
+                              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                                {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+                              </span>
+                            )}
                             <span>Seats: {b.seats?.sort((a,c)=>a-c).join(', ')}</span>
                           </div>
                           <p className="text-xs text-gray-400 mt-0.5">Ticket: <span className="font-mono font-medium">{b.ticketNumber}</span></p>

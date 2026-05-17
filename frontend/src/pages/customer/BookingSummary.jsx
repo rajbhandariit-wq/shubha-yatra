@@ -1,5 +1,6 @@
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bus, MapPin, Calendar, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { CATEGORY_META } from '../../utils/seatLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
@@ -43,7 +44,13 @@ function LegCard({ leg, label, color }) {
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Type</p>
-            <p className="font-medium">{bus?.type}</p>
+            {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? (
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+              </span>
+            ) : (
+              <p className="font-medium">{bus?.type || '—'}</p>
+            )}
           </div>
           <div>
             <p className="text-xs text-gray-400 mb-0.5">Seats</p>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { Bus, MapPin, Calendar, Clock, ArrowRight, CheckCircle, Download, Share2, Printer, Home } from 'lucide-react';
+import { CATEGORY_META } from '../../utils/seatLayout';
 import { QRCodeSVG } from 'qrcode.react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -146,7 +147,13 @@ const shareTicket = async () => {
                 <div className="hidden md:flex items-center gap-1">
                   <div className="h-px w-8 bg-gray-300"/><ArrowRight className="h-4 w-4"/><div className="h-px w-8 bg-gray-300"/>
                 </div>
-                <p className="text-xs mt-1 md:mt-0">{bus?.type || 'AC'}</p>
+                {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? (
+                  <span className={`text-xs mt-1 md:mt-0 px-2 py-0.5 rounded-full font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                    {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+                  </span>
+                ) : (
+                  <p className="text-xs mt-1 md:mt-0">{bus?.type || '—'}</p>
+                )}
               </div>
                 {/* 🔥 Distance + Time (NEW PART) */}
 

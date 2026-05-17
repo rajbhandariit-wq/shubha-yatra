@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Bus, Clock, MapPin, Star, AlertCircle, Wifi, Wind, Zap } from 'lucide-react';
+import { CATEGORY_META } from '../../utils/seatLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
@@ -133,7 +134,13 @@ export default function ReturnBusSelection() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-bold text-gray-800">{bus?.name}</h3>
-                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-700">{bus?.type}</span>
+                          {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                              {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-700">{bus?.type}</span>
+                          )}
                         </div>
                         <p className="text-xs text-gray-400 mt-0.5">{provider?.companyName || provider?.name} • {bus?.registrationNumber}</p>
                         <div className="flex gap-2 mt-2 flex-wrap">

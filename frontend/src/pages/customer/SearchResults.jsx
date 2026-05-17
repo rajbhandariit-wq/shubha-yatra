@@ -5,14 +5,9 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
 import toast from 'react-hot-toast';
+import { CATEGORY_META } from '../../utils/seatLayout';
 
 const AMENITY_ICONS = { WiFi: Wifi, AC: Wind, 'USB Charging': Zap };
-
-const CATEGORY_META = {
-  standard: { label: 'Standard',  icon: '🚌', color: 'bg-blue-100 text-blue-700' },
-  sofa:     { label: 'Sofa',      icon: '🛋️', color: 'bg-purple-100 text-purple-700' },
-  micro:    { label: 'Micro',     icon: '🚐', color: 'bg-green-100 text-green-700' },
-};
 
 function addDays(dateStr, n) {
   const d = new Date(dateStr);

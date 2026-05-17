@@ -7,6 +7,7 @@ import SeatMap from '../../components/SeatMap';
 import { customerAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { CATEGORY_META } from '../../utils/seatLayout';
 
 const ONE_WAY_STEPS  = ['Search', 'Select Seats', 'Payment', 'Confirmation'];
 const RT_STEPS       = ['Search', 'Outbound Seats', 'Return Seats', 'Review', 'Payment'];
@@ -102,7 +103,16 @@ export default function SeatSelection() {
           <div className="flex items-center gap-3">
             <Bus className="h-6 w-6" />
             <div>
-              <h1 className="text-xl font-bold">{bus?.name} — {bus?.type}</h1>
+              <h1 className="text-xl font-bold flex items-center gap-2 flex-wrap">
+                {bus?.name}
+                {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? (
+                  <span className={`text-sm px-2 py-0.5 rounded-full font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                    {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+                  </span>
+                ) : bus?.type ? (
+                  <span className="text-sm px-2 py-0.5 rounded-full font-medium bg-white/20">{bus.type}</span>
+                ) : null}
+              </h1>
               <p className="text-blue-200 text-sm">{bus?.registrationNumber} • {bus?.provider?.companyName}</p>
             </div>
           </div>
@@ -170,7 +180,7 @@ export default function SeatSelection() {
                 <div className="flex justify-between"><span className="text-gray-500">Route</span><span className="font-medium">{route?.source} → {route?.destination}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Date</span><span className="font-medium">{schedule?.travelDate}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Departure</span><span className="font-medium">{schedule?.departureTime}</span></div>
-                <div className="flex justify-between"><span className="text-gray-500">Bus</span><span className="font-medium">{bus?.type}</span></div>
+                <div className="flex justify-between"><span className="text-gray-500">Bus</span><span className="font-medium">{bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? `${CATEGORY_META[bus.seatLayout.busCategory].icon} ${CATEGORY_META[bus.seatLayout.busCategory].label}` : bus?.type}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Selected Seats</span><span className="font-medium">{selectedSeats.length > 0 ? selectedSeats.sort((a, b) => a - b).join(', ') : '—'}</span></div>
                 <div className="flex justify-between"><span className="text-gray-500">Price/Seat</span><span className="font-medium">NPR {schedule?.fare}</span></div>
               </div>

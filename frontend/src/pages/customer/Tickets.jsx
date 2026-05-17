@@ -1,5 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { Bus, MapPin, Calendar, Clock, ArrowRight, CheckCircle, Printer, Share2, Home } from 'lucide-react';
+import { CATEGORY_META } from '../../utils/seatLayout';
 import { QRCodeSVG } from 'qrcode.react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -40,7 +41,13 @@ function TicketCard({ booking, label, accentClass }) {
           <div className="flex flex-col items-center text-gray-400 gap-1">
             <Bus className="h-5 w-5 text-nepal-blue" />
             <ArrowRight className="h-4 w-4 hidden sm:block" />
-            <p className="text-xs">{bus?.type}</p>
+            {bus?.seatLayout?.busCategory && CATEGORY_META[bus.seatLayout.busCategory] ? (
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${CATEGORY_META[bus.seatLayout.busCategory].color}`}>
+                {CATEGORY_META[bus.seatLayout.busCategory].icon} {CATEGORY_META[bus.seatLayout.busCategory].label}
+              </span>
+            ) : (
+              <p className="text-xs">{bus?.type}</p>
+            )}
           </div>
           <div className="text-center sm:text-right">
             <p className="text-xs text-gray-400 uppercase">To</p>
