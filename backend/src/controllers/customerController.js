@@ -9,6 +9,30 @@ const { v4: uuidv4 } = require('uuid');
 const generateTicketNumber = () => `SY${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
 
+// Get customer profile + preferences
+exports.getProfile = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user: user.toSafeObject() });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Update customer preferences (wallet, favourites, emergency contacts, notifications)
+exports.updatePreferences = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    const merged = { ...(user.preferences || {}), ...req.body };
+    await user.update({ preferences: merged });
+    res.json({ message: 'Preferences saved', preferences: user.preferences });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Search buses
 exports.searchBuses = async (req, res) => {
   try {

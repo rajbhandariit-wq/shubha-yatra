@@ -49,6 +49,8 @@ export const customerAPI = {
   getMyBookings: (params) => api.get('/customer/bookings', { params }),
   getBooking: (id) => api.get(`/customer/bookings/${id}`),
   cancelBooking: (id, data) => api.put(`/customer/bookings/${id}/cancel`, data),
+  getProfile: () => api.get('/customer/profile'),
+  updatePreferences: (data) => api.put('/customer/profile/preferences', data),
 };
 
 // Provider

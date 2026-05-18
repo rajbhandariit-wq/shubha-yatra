@@ -54,6 +54,11 @@ module.exports = (sequelize) => {
       allowNull: true,
       defaultValue: [],
     },
+    preferences: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {},
+    },
     adminRole: {
       type: DataTypes.ENUM('super_admin', 'manager', 'operator'),
       allowNull: true,

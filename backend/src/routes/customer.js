@@ -2,6 +2,8 @@ const router = require('express').Router();
 const { authenticate, optionalAuth } = require('../middleware/auth');
 const ctrl = require('../controllers/customerController');
 
+router.get('/profile',          authenticate, ctrl.getProfile);
+router.put('/profile/preferences', authenticate, ctrl.updatePreferences);
 router.get('/cities', ctrl.getCities);
 router.get('/popular-routes', ctrl.getPopularRoutes);
 router.get('/search', ctrl.searchBuses);
