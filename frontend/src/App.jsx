@@ -44,6 +44,7 @@ import AdminSettings from './pages/admin/Settings';
 
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import BottomNav from './components/BottomNav';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfService from './pages/legal/TermsOfService';
 import RefundPolicy from './pages/legal/RefundPolicy';
@@ -92,8 +93,9 @@ const ProtectedRoute = ({ children, roles }) => {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const showBottomNav = !user || user.role === 'customer';
   return (
-    <>
+    <div className={showBottomNav ? 'pb-16 md:pb-0' : ''}>
     <ScrollToTop />
     <BackButtonHandler />
     <Routes>
@@ -144,7 +146,8 @@ function AppRoutes() {
       <Route path="/reset-password/:token" element={<ResetPassword />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-    </>
+    {showBottomNav && <BottomNav />}
+    </div>
   );
 }
 

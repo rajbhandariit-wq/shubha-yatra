@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Wallet, Heart, ShieldCheck, Users, Bell, Lock,
   Plus, Trash2, Check, X, ChevronRight, CreditCard,
@@ -491,10 +491,17 @@ function PrivacySection() {
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function CustomerDashboard() {
   const { user } = useAuth();
-  const [active, setActive] = useState('wallet');
+  const [searchParams] = useSearchParams();
+  const initialTab = MENU.find(m => m.id === searchParams.get('tab'))?.id || 'wallet';
+  const [active, setActive] = useState(initialTab);
   const [prefs, setPrefs] = useState({});
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && MENU.find(m => m.id === tab)) setActive(tab);
+  }, [searchParams]);
 
   useEffect(() => {
     customerAPI.getProfile()
