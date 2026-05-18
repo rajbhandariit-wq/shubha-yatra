@@ -66,7 +66,7 @@ export default function Footer() {
             <ul className="space-y-3 text-gray-400 text-sm">
               <li className="flex items-start gap-2"><MapPin className="h-4 w-4 mt-0.5 text-nepal-red shrink-0" /><span>New Baneshwor, Kathmandu, Nepal</span></li>
               <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-nepal-red shrink-0" /><a href="tel:+977-1-4567890" className="hover:text-white">+977-1-4567890</a></li>
-              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-nepal-red shrink-0" /><a href="mailto:support@shubhayatra.com" className="hover:text-white">support@shubhayatra.com</a></li>
+              <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-nepal-red shrink-0" /><a href="mailto:support@shubha-yatra.com" className="hover:text-white">support@shubha-yatra.com</a></li>
             </ul>
             <div className="mt-4 p-3 bg-white/5 rounded-lg border border-white/10">
               <p className="text-xs text-gray-400">Emergency Helpline</p>

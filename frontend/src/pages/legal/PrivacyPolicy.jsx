@@ -57,7 +57,7 @@ export default function PrivacyPolicy() {
 
           <section>
             <h2 className="text-lg font-bold text-gray-800 mb-3">6. Your Rights</h2>
-            <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:support@shubhayatra.com" className="text-primary-600 hover:underline">support@shubhayatra.com</a>. We will respond within 7 business days.</p>
+            <p>You have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:support@shubha-yatra.com" className="text-primary-600 hover:underline">support@shubha-yatra.com</a>. We will respond within 7 business days.</p>
           </section>
 
           <section>
@@ -71,7 +71,7 @@ export default function PrivacyPolicy() {
             <div className="mt-2 text-gray-600">
               <p>Shubha Yatra Pvt. Ltd.</p>
               <p>New Baneshwor, Kathmandu, Nepal</p>
-              <p>Email: <a href="mailto:support@shubhayatra.com" className="text-primary-600 hover:underline">support@shubhayatra.com</a></p>
+              <p>Email: <a href="mailto:support@shubha-yatra.com" className="text-primary-600 hover:underline">support@shubha-yatra.com</a></p>
               <p>Phone: +977-1-4567890</p>
             </div>
           </section>

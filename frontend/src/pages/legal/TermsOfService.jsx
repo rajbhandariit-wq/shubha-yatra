@@ -52,7 +52,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-bold text-gray-800 mb-3">6. User Accounts</h2>
-            <p>You are responsible for maintaining the confidentiality of your account credentials. Any activity under your account is your responsibility. Notify us immediately at <a href="mailto:support@shubhayatra.com" className="text-primary-600 hover:underline">support@shubhayatra.com</a> if you suspect unauthorized access.</p>
+            <p>You are responsible for maintaining the confidentiality of your account credentials. Any activity under your account is your responsibility. Notify us immediately at <a href="mailto:support@shubha-yatra.com" className="text-primary-600 hover:underline">support@shubha-yatra.com</a> if you suspect unauthorized access.</p>
           </section>
 
           <section>
@@ -67,7 +67,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-bold text-gray-800 mb-3">9. Contact</h2>
-            <p>For questions about these Terms, contact us at <a href="mailto:support@shubhayatra.com" className="text-primary-600 hover:underline">support@shubhayatra.com</a> or call +977-1-4567890.</p>
+            <p>For questions about these Terms, contact us at <a href="mailto:support@shubha-yatra.com" className="text-primary-600 hover:underline">support@shubha-yatra.com</a> or call +977-1-4567890.</p>
           </section>
 
         </div>

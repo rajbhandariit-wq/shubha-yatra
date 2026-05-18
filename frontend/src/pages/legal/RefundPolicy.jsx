@@ -78,7 +78,7 @@ export default function RefundPolicy() {
 
           <section>
             <h2 className="text-lg font-bold text-gray-800 mb-3">Disputes</h2>
-            <p>If you believe a refund was incorrectly processed, contact us within 7 days of the cancellation at <a href="mailto:support@shubhayatra.com" className="text-primary-600 hover:underline">support@shubhayatra.com</a> with your booking reference number. We will review and respond within 3 business days.</p>
+            <p>If you believe a refund was incorrectly processed, contact us within 7 days of the cancellation at <a href="mailto:support@shubha-yatra.com" className="text-primary-600 hover:underline">support@shubha-yatra.com</a> with your booking reference number. We will review and respond within 3 business days.</p>
           </section>
 
         </div>
