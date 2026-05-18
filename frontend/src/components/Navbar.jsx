@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bus, Menu, X, User, LogOut, Ticket, LayoutDashboard, ChevronDown, Settings } from 'lucide-react';
+import { Bus, Menu, X, User, LogOut, Ticket, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
@@ -116,14 +116,11 @@ export default function Navbar() {
                     <Link to={getDashboardLink()} className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setDropOpen(false)}>
                       <LayoutDashboard className="h-4 w-4 text-nepal-blue" /> Dashboard
                     </Link>
-                    {user.role === 'customer' && (<>
+                    {user.role === 'customer' && (
                       <Link to="/my-bookings" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setDropOpen(false)}>
                         <Ticket className="h-4 w-4 text-green-600" /> My Bookings
                       </Link>
-                      <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" onClick={() => setDropOpen(false)}>
-                        <Settings className="h-4 w-4 text-gray-500" /> Account Settings
-                      </Link>
-                    </>)}
+                    )}
                     <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
                       <LogOut className="h-4 w-4" /> Logout
                     </button>
@@ -156,10 +153,9 @@ export default function Navbar() {
           </>}
           {user && <>
             <Link to={getDashboardLink()} className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            {user.role === 'customer' && <>
+            {user.role === 'customer' &&
               <Link to="/my-bookings" className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>My Bookings</Link>
-              <Link to="/dashboard" className="block text-blue-100 hover:text-white py-2" onClick={() => setMenuOpen(false)}>Account Settings</Link>
-            </>}
+            }
             <button onClick={handleLogout} className="block w-full text-left text-red-300 hover:text-red-100 py-2">Logout</button>
           </>}
         </div>

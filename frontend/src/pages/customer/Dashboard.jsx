@@ -5,12 +5,12 @@ import {
   Plus, Trash2, Check, X, ChevronRight, CreditCard,
   ArrowRight, Phone, ExternalLink, AlertTriangle,
   Smartphone, Mail, ToggleLeft, ToggleRight, Upload,
-  FileText, User,
+  FileText, User, KeyRound, ChevronLeft,
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { useAuth } from '../../contexts/AuthContext';
-import { customerAPI } from '../../services/api';
+import { customerAPI, authAPI } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalgunj','Dharan','Biratnagar','Janakpur','Bhairahawa','Birgunj','Hetauda','Dhangadhi','Illam','Tansen','Mustang'];
@@ -23,6 +23,7 @@ const MENU = [
   { id: 'emergency',     icon: Users,       label: 'Emergency Contacts',   desc: 'Contact details' },
   { id: 'notifications', icon: Bell,        label: 'Notifications',        desc: 'Alerts & offers' },
   { id: 'privacy',       icon: Lock,        label: 'Privacy & Data',       desc: 'Policies & your data' },
+  { id: 'settings',      icon: KeyRound,    label: 'Settings',             desc: 'Password & security' },
 ];
 
 // ── Wallet & Payments ────────────────────────────────────────────────────────
@@ -488,19 +489,113 @@ function PrivacySection() {
   );
 }
 
+// ── Settings (password change) ────────────────────────────────────────────────
+function SettingsSection() {
+  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!form.currentPassword || !form.newPassword) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (form.newPassword !== form.confirmPassword) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (form.newPassword.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    setSaving(true);
+    try {
+      await authAPI.changePassword({ currentPassword: form.currentPassword, newPassword: form.newPassword });
+      toast.success('Password changed successfully');
+      setForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to change password');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-lg font-bold text-gray-800 mb-1">Settings</h2>
+        <p className="text-sm text-gray-500">Change your password and manage account security.</p>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 p-5 space-y-4">
+        <div className="flex items-center gap-3 mb-1">
+          <div className="w-9 h-9 rounded-xl bg-primary-100 flex items-center justify-center">
+            <KeyRound className="h-4 w-4 text-primary-600" />
+          </div>
+          <div>
+            <p className="font-semibold text-gray-800 text-sm">Change Password</p>
+            <p className="text-xs text-gray-400">Use a strong password you haven't used before</p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Current Password</label>
+            <input
+              type="password"
+              value={form.currentPassword}
+              onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
+              className="input-field"
+              placeholder="Enter current password"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">New Password</label>
+            <input
+              type="password"
+              value={form.newPassword}
+              onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+              className="input-field"
+              placeholder="At least 6 characters"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              value={form.confirmPassword}
+              onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+              className="input-field"
+              placeholder="Re-enter new password"
+            />
+          </div>
+        </div>
+
+        <button onClick={save} disabled={saving} className="btn-primary w-full py-2.5 mt-2">
+          {saving ? 'Updating...' : 'Update Password'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 export default function CustomerDashboard() {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const initialTab = MENU.find(m => m.id === searchParams.get('tab'))?.id || 'wallet';
+  const initialTab = MENU.find(m => m.id === searchParams.get('tab'))?.id || null;
   const [active, setActive] = useState(initialTab);
+  // mobile: 'menu' shows the list, 'detail' shows the content panel
+  const [mobileView, setMobileView] = useState(initialTab ? 'detail' : 'menu');
   const [prefs, setPrefs] = useState({});
   const [profileUser, setProfileUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab && MENU.find(m => m.id === tab)) setActive(tab);
+    if (tab && MENU.find(m => m.id === tab)) {
+      setActive(tab);
+      setMobileView('detail');
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -523,67 +618,107 @@ export default function CustomerDashboard() {
     }
   };
 
+  const selectTab = (id) => {
+    setActive(id);
+    setMobileView('detail');
+  };
+
   const activeMenu = MENU.find(m => m.id === active);
+
+  const SidebarMenu = ({ onClick }) => (
+    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {MENU.map(({ id, icon: Icon, label, desc }) => (
+        <button key={id} onClick={() => onClick(id)}
+          className={`w-full flex items-center gap-3 px-4 py-4 text-left border-b border-gray-100 last:border-0 transition-colors ${active === id ? 'bg-primary-50 border-l-4 border-l-primary-500' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${active === id ? 'bg-primary-100' : 'bg-gray-100'}`}>
+            <Icon className={`h-4 w-4 ${active === id ? 'text-primary-600' : 'text-gray-500'}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-semibold ${active === id ? 'text-primary-700' : 'text-gray-700'}`}>{label}</p>
+            <p className="text-xs text-gray-400">{desc}</p>
+          </div>
+          <ChevronRight className={`h-4 w-4 shrink-0 ${active === id ? 'text-primary-400' : 'text-gray-300'}`} />
+        </button>
+      ))}
+    </div>
+  );
+
+  const ContentPanel = () => (
+    <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-6">
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent" />
+        </div>
+      ) : (
+        <>
+          {active === 'wallet'        && <WalletSection prefs={prefs} onSave={handleSave} />}
+          {active === 'favourites'    && <FavouritesSection prefs={prefs} onSave={handleSave} />}
+          {active === 'id'            && <IDVerificationSection user={profileUser} />}
+          {active === 'emergency'     && <EmergencyContactsSection prefs={prefs} onSave={handleSave} />}
+          {active === 'notifications' && <NotificationsSection prefs={prefs} onSave={handleSave} />}
+          {active === 'privacy'       && <PrivacySection />}
+          {active === 'settings'      && <SettingsSection />}
+          {!active && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+              <User className="h-12 w-12 mb-3 opacity-30" />
+              <p className="text-sm">Select an option from the menu</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto w-full px-4 py-8 flex-1">
-        {/* Page header */}
-        <div className="mb-6">
-          <h1 className="text-2xl font-extrabold text-gray-800">My Account</h1>
-          <p className="text-gray-500 text-sm mt-1">{user?.name} · {user?.email}</p>
-        </div>
+      <div className="max-w-6xl mx-auto w-full px-4 py-6 flex-1">
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar */}
-          <div className="lg:w-64 shrink-0">
-            {/* Mobile: horizontal scroll tabs */}
-            <div className="flex lg:hidden gap-2 overflow-x-auto pb-2 scrollbar-none">
-              {MENU.map(({ id, icon: Icon, label }) => (
-                <button key={id} onClick={() => setActive(id)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-all shrink-0 ${active === id ? 'bg-primary-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-primary-300'}`}>
-                  <Icon className="h-4 w-4" />{label}
-                </button>
-              ))}
-            </div>
-
-            {/* Desktop: vertical sidebar */}
-            <div className="hidden lg:block bg-white rounded-2xl border border-gray-200 overflow-hidden">
-              {MENU.map(({ id, icon: Icon, label, desc }) => (
-                <button key={id} onClick={() => setActive(id)}
-                  className={`w-full flex items-center gap-3 px-4 py-4 text-left border-b border-gray-100 last:border-0 transition-colors ${active === id ? 'bg-primary-50 border-l-4 border-l-primary-500' : 'hover:bg-gray-50 border-l-4 border-l-transparent'}`}>
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${active === id ? 'bg-primary-100' : 'bg-gray-100'}`}>
-                    <Icon className={`h-4 w-4 ${active === id ? 'text-primary-600' : 'text-gray-500'}`} />
-                  </div>
-                  <div>
-                    <p className={`text-sm font-semibold ${active === id ? 'text-primary-700' : 'text-gray-700'}`}>{label}</p>
-                    <p className="text-xs text-gray-400">{desc}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 bg-white rounded-2xl border border-gray-200 p-6">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary-500 border-t-transparent" />
+        {/* ── Mobile layout ── */}
+        <div className="lg:hidden">
+          {mobileView === 'menu' ? (
+            <>
+              {/* User header card */}
+              <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center text-white text-lg font-bold shrink-0">
+                  {user?.name?.[0]?.toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-bold text-gray-800 truncate">{user?.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                </div>
               </div>
-            ) : (
-              <>
-                {active === 'wallet'        && <WalletSection prefs={prefs} onSave={handleSave} />}
-                {active === 'favourites'    && <FavouritesSection prefs={prefs} onSave={handleSave} />}
-                {active === 'id'            && <IDVerificationSection user={profileUser} />}
-                {active === 'emergency'     && <EmergencyContactsSection prefs={prefs} onSave={handleSave} />}
-                {active === 'notifications' && <NotificationsSection prefs={prefs} onSave={handleSave} />}
-                {active === 'privacy'       && <PrivacySection />}
-              </>
-            )}
+              <SidebarMenu onClick={selectTab} />
+            </>
+          ) : (
+            <>
+              {/* Back button + section title */}
+              <button
+                onClick={() => setMobileView('menu')}
+                className="flex items-center gap-2 text-primary-600 font-medium text-sm mb-4 hover:text-primary-700 transition-colors">
+                <ChevronLeft className="h-5 w-5" />
+                {activeMenu?.label || 'Back'}
+              </button>
+              <ContentPanel />
+            </>
+          )}
+        </div>
+
+        {/* ── Desktop layout ── */}
+        <div className="hidden lg:block">
+          <div className="mb-6">
+            <h1 className="text-2xl font-extrabold text-gray-800">My Account</h1>
+            <p className="text-gray-500 text-sm mt-1">{user?.name} · {user?.email}</p>
+          </div>
+          <div className="flex gap-6">
+            <div className="w-64 shrink-0">
+              <SidebarMenu onClick={setActive} />
+            </div>
+            <ContentPanel />
           </div>
         </div>
+
       </div>
 
       <Footer />
