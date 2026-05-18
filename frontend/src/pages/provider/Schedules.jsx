@@ -32,7 +32,7 @@ export default function ProviderSchedules() {
       const [s, b, r] = await Promise.all([providerAPI.getSchedules(), providerAPI.getBuses(), providerAPI.getRoutes()]);
       setSchedules(s.data.schedules || []);
       setBuses(b.data.buses || []);
-      setRoutes(r.data.routes || []);
+      setRoutes((r.data.routes || []).filter(rt => rt.isActive !== false));
     } catch { toast.error('Failed to load'); } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);

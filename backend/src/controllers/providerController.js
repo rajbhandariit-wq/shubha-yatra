@@ -172,7 +172,10 @@ exports.createSchedule = async (req, res) => {
     const { busId, routeId, travelDate, departureTime, arrivalTime, fare } = req.body;
     const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id } });
     if (!bus) return res.status(404).json({ message: 'Bus not found' });
-    const schedule = await Schedule.create({ busId, routeId, travelDate, departureTime, arrivalTime, fare, availableSeats: bus.totalSeats });
+    const route = await Route.findOne({ where: { id: routeId, isActive: true } });
+    if (!route) return res.status(404).json({ message: 'Route not found or is deactivated. Please select an active route.' });
+    const cleanDate = typeof travelDate === 'string' ? travelDate.split('T')[0] : travelDate;
+    const schedule = await Schedule.create({ busId, routeId, travelDate: cleanDate, departureTime, arrivalTime, fare, availableSeats: bus.totalSeats });
     res.status(201).json({ message: 'Schedule created', schedule });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -192,7 +195,7 @@ exports.createBulkSchedules = async (req, res) => {
     const end = new Date(endDate);
     const cur = new Date(startDate);
     while (cur <= end) {
-      const day = cur.getDay();
+      const day = cur.getUTCDay();
       if (daysOfWeek.includes(day)) {
         const ov = dayOverrides[day] || {};
         records.push({
@@ -204,7 +207,7 @@ exports.createBulkSchedules = async (req, res) => {
           availableSeats: bus.totalSeats,
         });
       }
-      cur.setDate(cur.getDate() + 1);
+      cur.setUTCDate(cur.getUTCDate() + 1);
     }
 
     if (records.length === 0) {
