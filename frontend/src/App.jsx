@@ -45,6 +45,8 @@ import AdminSettings from './pages/admin/Settings';
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import BottomNav from './components/BottomNav';
+import ProviderBottomNav from './components/ProviderBottomNav';
+import ProviderProfile from './pages/provider/ProviderProfile';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import TermsOfService from './pages/legal/TermsOfService';
 import RefundPolicy from './pages/legal/RefundPolicy';
@@ -94,8 +96,9 @@ const ProtectedRoute = ({ children, roles }) => {
 function AppRoutes() {
   const { user } = useAuth();
   const showBottomNav = !user || user.role === 'customer';
+  const showProviderNav = user?.role === 'provider';
   return (
-    <div className={showBottomNav ? 'pb-16 md:pb-0' : ''}>
+    <div className={showBottomNav || showProviderNav ? 'pb-16 md:pb-0' : ''}>
     <ScrollToTop />
     <BackButtonHandler />
     <Routes>
@@ -125,6 +128,7 @@ function AppRoutes() {
       <Route path="/provider/reports" element={<ProtectedRoute roles={['provider']}><ProviderReports /></ProtectedRoute>} />
       <Route path="/provider/create-booking" element={<CreateBooking />} />
       <Route path="/provider/documents" element={<ProtectedRoute roles={['provider']}><ProviderDocuments /></ProtectedRoute>} />
+      <Route path="/provider/profile" element={<ProtectedRoute roles={['provider']}><ProviderProfile /></ProtectedRoute>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -147,6 +151,7 @@ function AppRoutes() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     {showBottomNav && <BottomNav />}
+    {showProviderNav && <ProviderBottomNav />}
     </div>
   );
 }

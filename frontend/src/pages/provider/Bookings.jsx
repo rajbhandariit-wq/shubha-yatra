@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, ArrowRight, Bus, User, Calendar } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import ProviderLayout from '../../components/ProviderLayout';
 import { providerAPI } from '../../services/api';
 import toast from 'react-hot-toast';
@@ -7,15 +8,18 @@ import toast from 'react-hot-toast';
 const statusColors = { confirmed:'badge-confirmed', cancelled:'badge-cancelled', pending:'badge-pending', completed:'badge-completed' };
 
 export default function ProviderBookings() {
+  const [urlParams] = useSearchParams();
+  const dateParam = urlParams.get('date') || '';
+
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status:'', startDate:'', endDate:'' });
+  const [filters, setFilters] = useState({ status:'', startDate: dateParam, endDate: dateParam });
 
   const load = (f={}) => {
     setLoading(true);
     providerAPI.getBookings(f).then(r => setBookings(r.data.bookings||[])).catch(() => toast.error('Failed')).finally(() => setLoading(false));
   };
-  useEffect(() => load(), []);
+  useEffect(() => load({ startDate: dateParam, endDate: dateParam }), [dateParam]);
 
   const handleFilter = (e) => { e.preventDefault(); load(filters); };
 

@@ -107,7 +107,7 @@ export default function ProviderLayout({ children, title }) {
             <span className="hidden sm:block">{user?.companyName || user?.name}</span>
           </div>
         </header>
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 pb-20 md:pb-6">
           {!isApproved && (
             <div className="mb-5 bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
