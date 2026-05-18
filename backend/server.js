@@ -11,6 +11,7 @@ const adminRoutes = require('./src/routes/admin');
 const paymentRoutes = require('./src/routes/payment');
 const billingRoutes = require('./src/routes/billing');
 const { start: startScheduler } = require('./src/jobs/payoutScheduler');
+const { start: startCleanup } = require('./src/jobs/scheduleCleanup');
 
 const app = express();
 
@@ -40,6 +41,7 @@ const PORT = process.env.PORT || 5000;
 sequelize.sync({ alter: true }).then(() => {
   console.log('✅ Database synced');
   startScheduler();
+  startCleanup();
   app.listen(PORT, () => console.log(`🚌 Shubha Yatra API running on port ${PORT}`));
 }).catch(err => {
   console.error('❌ DB connection error:', err.message);

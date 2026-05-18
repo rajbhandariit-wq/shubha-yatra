@@ -31,7 +31,7 @@ export default function ProviderSchedules() {
     try {
       const [s, b, r] = await Promise.all([providerAPI.getSchedules(), providerAPI.getBuses(), providerAPI.getRoutes()]);
       setSchedules(s.data.schedules || []);
-      setBuses(b.data.buses || []);
+      setBuses((b.data.buses || []).filter(bus => bus.isActive !== false));
       setRoutes((r.data.routes || []).filter(rt => rt.isActive !== false));
     } catch { toast.error('Failed to load'); } finally { setLoading(false); }
   };

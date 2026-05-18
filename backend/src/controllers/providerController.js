@@ -170,8 +170,8 @@ exports.deleteRoute = async (req, res) => {
 exports.createSchedule = async (req, res) => {
   try {
     const { busId, routeId, travelDate, departureTime, arrivalTime, fare } = req.body;
-    const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id } });
-    if (!bus) return res.status(404).json({ message: 'Bus not found' });
+    const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id, isActive: true } });
+    if (!bus) return res.status(404).json({ message: 'Bus not found or is deactivated. Please select an active bus.' });
     const route = await Route.findOne({ where: { id: routeId, isActive: true } });
     if (!route) return res.status(404).json({ message: 'Route not found or is deactivated. Please select an active route.' });
     const cleanDate = typeof travelDate === 'string' ? travelDate.split('T')[0] : travelDate;
@@ -188,8 +188,8 @@ exports.createBulkSchedules = async (req, res) => {
     if (!busId || !routeId || !startDate || !endDate || !daysOfWeek?.length) {
       return res.status(400).json({ message: 'Missing required fields' });
     }
-    const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id } });
-    if (!bus) return res.status(404).json({ message: 'Bus not found' });
+    const bus = await Bus.findOne({ where: { id: busId, providerId: req.user.id, isActive: true } });
+    if (!bus) return res.status(404).json({ message: 'Bus not found or is deactivated. Please select an active bus.' });
 
     const records = [];
     const end = new Date(endDate);
