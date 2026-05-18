@@ -56,8 +56,6 @@ export default function Home() {
 
   const swapCities = () => setForm(f => ({ ...f, source: f.destination, destination: f.source }));
 
-  const landmark = NEPAL_LANDMARKS[bgIdx];
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -77,10 +75,6 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="absolute top-6 right-6 bg-black/40 backdrop-blur-sm rounded-xl px-4 py-2 text-white text-sm">
-          <p className="font-semibold">{landmark.name}</p>
-          <p className="text-white/70 text-xs font-nepali">{landmark.subtitle}</p>
-        </div>
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
           {NEPAL_LANDMARKS.map((_, i) => (
