@@ -7,12 +7,12 @@ import { customerAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const NEPAL_LANDMARKS = [
-  { name: 'Kathmandu', subtitle: 'काठमाडौं', url: '/images/indra-Jatra-1.jpg', credit: 'Kathmandu Valley' },
-  { name: 'Pokhara', subtitle: 'पोखरा', url: '/images/Annapurna.jpg', credit: 'Pokhara Region' },
-  { name: 'Lumbini', subtitle: 'लुम्बिनी', url: '/images/Lumbini.jpg', credit: 'Birthplace of Buddha' },
-  { name: 'Pashupatinath', subtitle: 'पशुपतिनाथ', url: '/images/Pashupatinath.jpg', credit: 'Sacred Temple' },
-  { name: 'Langtang', subtitle: 'लंगताङ', url: '/images/Langtang.jpg', credit: 'Trekking Region' },
-  { name: 'Swayambhu', subtitle: 'स्वयम्भु', url: '/images/Swayambhu.jpg', credit: 'Sacred Site' },
+  { url: '/images/indra-Jatra-1.jpg', credit: 'Kathmandu Valley' },
+  { url: '/images/Annapurna.jpg', credit: 'Pokhara Region' },
+  { url: '/images/Lumbini.jpg', credit: 'Birthplace of Buddha' },
+  { url: '/images/Pashupatinath.jpg', credit: 'Sacred Temple' },
+  { url: '/images/Langtang.jpg', credit: 'Trekking Region' },
+  { url: '/images/Swayambhu.jpg', credit: 'Sacred Site' },
 ];
 
 const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalgunj','Dharan','Biratnagar','Janakpur','Bhairahawa','Birgunj','Hetauda','Dhangadhi','Illam','Tansen','Mustang'];
