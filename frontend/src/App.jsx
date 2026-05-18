@@ -44,6 +44,10 @@ import AdminSettings from './pages/admin/Settings';
 
 import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import TermsOfService from './pages/legal/TermsOfService';
+import RefundPolicy from './pages/legal/RefundPolicy';
+import ExploreLandmark from './pages/explore/ExploreLandmark';
 
 
 
@@ -130,9 +134,13 @@ function AppRoutes() {
       <Route path="/admin/billing" element={<ProtectedRoute roles={['admin']}><AdminBilling /></ProtectedRoute>} />
       <Route path="/admin/billing/batches/:id" element={<ProtectedRoute roles={['admin']}><BatchDetail /></ProtectedRoute>} />
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/refund-policy" element={<RefundPolicy />} />
+      <Route path="/explore/:slug" element={<ExploreLandmark />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </>
   );

@@ -79,9 +79,9 @@ export default function Footer() {
         <div className="border-t border-white/10 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-gray-500 text-sm">© 2024 Shubha Yatra. All rights reserved. | नेपाल सरकार दर्ता संस्था</p>
           <div className="flex gap-4 text-gray-500 text-xs">
-            <a href="#" className="hover:text-white">Privacy Policy</a>
-            <a href="#" className="hover:text-white">Terms of Service</a>
-            <a href="#" className="hover:text-white">Refund Policy</a>
+            <Link to="/privacy-policy" className="hover:text-white">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-white">Terms of Service</Link>
+            <Link to="/refund-policy" className="hover:text-white">Refund Policy</Link>
           </div>
         </div>
       </div>

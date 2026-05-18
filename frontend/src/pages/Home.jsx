@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Search, MapPin, Calendar, ArrowRight, ArrowLeftRight, Star, Shield, Clock, Headphones } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -7,12 +7,12 @@ import { customerAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const NEPAL_LANDMARKS = [
-  { url: '/images/indra-Jatra-1.jpg', credit: 'Kathmandu Valley' },
-  { url: '/images/Annapurna.jpg', credit: 'Pokhara Region' },
-  { url: '/images/Lumbini.jpg', credit: 'Birthplace of Buddha' },
-  { url: '/images/Pashupatinath.jpg', credit: 'Sacred Temple' },
-  { url: '/images/Langtang.jpg', credit: 'Trekking Region' },
-  { url: '/images/Swayambhu.jpg', credit: 'Sacred Site' },
+  { slug: 'kathmandu',    name: 'Kathmandu',    url: '/images/indra-Jatra-1.jpg' },
+  { slug: 'pokhara',     name: 'Pokhara',      url: '/images/Annapurna.jpg' },
+  { slug: 'lumbini',     name: 'Lumbini',      url: '/images/Lumbini.jpg' },
+  { slug: 'pashupatinath', name: 'Pashupatinath', url: '/images/Pashupatinath.jpg' },
+  { slug: 'langtang',    name: 'Langtang',     url: '/images/Langtang.jpg' },
+  { slug: 'swayambhu',   name: 'Swayambhu',    url: '/images/Swayambhu.jpg' },
 ];
 
 const NEPAL_CITIES = ['Kathmandu','Pokhara','Chitwan','Lumbini','Butwal','Nepalgunj','Dharan','Biratnagar','Janakpur','Bhairahawa','Birgunj','Hetauda','Dhangadhi','Illam','Tansen','Mustang'];
@@ -253,11 +253,11 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-gray-800">Explore Nepal</h2>
             <p className="text-gray-500 mt-2 font-nepali">नेपाल अन्वेषण गर्नुहोस्</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" id="explore">
             {NEPAL_LANDMARKS.map((lm, i) => (
-              <div key={i} className="relative rounded-2xl overflow-hidden h-52 group cursor-pointer">
+              <Link key={i} to={`/explore/${lm.slug}`} className="relative rounded-2xl overflow-hidden h-52 group cursor-pointer block">
                 <img src={lm.url} alt={lm.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.target.parentElement.style.background = 'linear-gradient(135deg, #003893, #DC143C)'; e.target.style.display = 'none'; }} />
-              </div>
+              </Link>
             ))}
           </div>
         </div>
