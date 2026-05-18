@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Bus, CheckCircle, XCircle, X, ChevronRight, ChevronLeft, Minus } from 'lucide-react';
+import { Plus, Edit2, Trash2, Bus, X, ChevronRight, ChevronLeft, Minus, Power, PowerOff } from 'lucide-react';
 import ProviderLayout from '../../components/ProviderLayout';
 import { providerAPI } from '../../services/api';
 import SeatMap from '../../components/SeatMap';
@@ -121,10 +121,15 @@ export default function ProviderBuses() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Deactivate this bus?')) return;
+  const handleDeactivate = async (id) => {
+    if (!confirm('Deactivate this bus? It will be hidden from schedules.')) return;
     try { await providerAPI.deleteBus(id); toast.success('Bus deactivated'); load(); }
-    catch { toast.error('Failed'); }
+    catch { toast.error('Failed to deactivate'); }
+  };
+
+  const handleReactivate = async (id) => {
+    try { await providerAPI.updateBus(id, { isActive: true }); toast.success('Bus reactivated'); load(); }
+    catch { toast.error('Failed to reactivate'); }
   };
 
   const toggleAmenity = (a) => setForm(f => ({
@@ -138,7 +143,13 @@ export default function ProviderBuses() {
   return (
     <ProviderLayout title="Manage Buses">
       <div className="flex justify-between items-center mb-6">
-        <p className="text-gray-500">{buses.length} bus{buses.length !== 1 ? 'es' : ''} registered</p>
+        <div className="flex items-center gap-3 text-sm">
+          <span className="text-gray-500">{buses.length} bus{buses.length !== 1 ? 'es' : ''}</span>
+          <span className="flex items-center gap-1 text-green-700 font-medium"><Power className="h-3.5 w-3.5" />{buses.filter(b => b.isActive !== false).length} active</span>
+          {buses.filter(b => b.isActive === false).length > 0 && (
+            <span className="flex items-center gap-1 text-red-500 font-medium"><PowerOff className="h-3.5 w-3.5" />{buses.filter(b => b.isActive === false).length} inactive</span>
+          )}
+        </div>
         <button onClick={openAdd} className="btn-primary flex items-center gap-2"><Plus className="h-4 w-4" />Add Bus</button>
       </div>
 
@@ -150,13 +161,15 @@ export default function ProviderBuses() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {buses.map(b => {
             const sl = b.seatLayout;
+            const active = b.isActive !== false;
             const layoutLabel = sl?.busCategory ? BUS_CATEGORIES[sl.busCategory]?.label : null;
             const layoutDetail = sl?.layoutType ? `${sl.layoutType} · ${sl.totalSeats || b.totalSeats} seats` : null;
             return (
-              <div key={b.id} className="bg-white rounded-2xl border border-gray-200 hover:shadow-md transition-shadow p-5">
+              <div key={b.id} className={`rounded-2xl border transition-shadow p-5 ${active ? 'bg-white border-gray-200 hover:shadow-md' : 'bg-gray-50 border-gray-200 opacity-70'}`}>
+                {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-nepal-blue to-blue-600 rounded-xl flex items-center justify-center">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${active ? 'bg-gradient-to-br from-nepal-blue to-blue-600' : 'bg-gray-300'}`}>
                       <Bus className="h-6 w-6 text-white" />
                     </div>
                     <div>
@@ -164,18 +177,25 @@ export default function ProviderBuses() {
                       <p className="text-xs text-gray-400">{b.registrationNumber}</p>
                     </div>
                   </div>
-                  {b.isActive ? <CheckCircle className="h-5 w-5 text-green-500 shrink-0" /> : <XCircle className="h-5 w-5 text-red-400 shrink-0" />}
+                  {active
+                    ? <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700"><Power className="h-3 w-3" />Active</span>
+                    : <span className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-red-100 text-red-600"><PowerOff className="h-3 w-3" />Inactive</span>
+                  }
                 </div>
+
+                {/* Stats */}
                 <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-                  <div className="bg-gray-50 rounded-lg px-3 py-1.5">
+                  <div className="bg-gray-100 rounded-lg px-3 py-1.5">
                     <p className="text-xs text-gray-400">Category</p>
                     <p className="font-semibold">{layoutLabel || b.type || '—'}</p>
                   </div>
-                  <div className="bg-gray-50 rounded-lg px-3 py-1.5">
+                  <div className="bg-gray-100 rounded-lg px-3 py-1.5">
                     <p className="text-xs text-gray-400">Layout</p>
                     <p className="font-semibold">{layoutDetail || `${b.totalSeats} seats`}</p>
                   </div>
                 </div>
+
+                {/* Amenities */}
                 <div className="flex flex-wrap gap-1 mb-4">
                   {(b.amenities || []).slice(0, 3).map(a => (
                     <span key={a} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{a}</span>
@@ -184,13 +204,21 @@ export default function ProviderBuses() {
                     <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">+{b.amenities.length - 3} more</span>
                   )}
                 </div>
+
+                {/* Actions */}
                 <div className="flex gap-2">
                   <button onClick={() => openEdit(b)} className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600">
                     <Edit2 className="h-3.5 w-3.5" />Edit
                   </button>
-                  <button onClick={() => handleDelete(b.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm border border-red-100 rounded-lg hover:bg-red-50 text-red-500">
-                    <Trash2 className="h-3.5 w-3.5" />Remove
-                  </button>
+                  {active ? (
+                    <button onClick={() => handleDeactivate(b.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm border border-red-100 rounded-lg hover:bg-red-50 text-red-500">
+                      <PowerOff className="h-3.5 w-3.5" />Deactivate
+                    </button>
+                  ) : (
+                    <button onClick={() => handleReactivate(b.id)} className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm border border-green-200 rounded-lg hover:bg-green-50 text-green-600">
+                      <Power className="h-3.5 w-3.5" />Reactivate
+                    </button>
+                  )}
                 </div>
               </div>
             );
