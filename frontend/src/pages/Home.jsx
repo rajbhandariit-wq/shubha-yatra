@@ -263,11 +263,6 @@ export default function Home() {
             {NEPAL_LANDMARKS.map((lm, i) => (
               <div key={i} className="relative rounded-2xl overflow-hidden h-52 group cursor-pointer">
                 <img src={lm.url} alt={lm.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" onError={(e) => { e.target.parentElement.style.background = 'linear-gradient(135deg, #003893, #DC143C)'; e.target.style.display = 'none'; }} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                <div className="absolute bottom-3 left-3 text-white">
-                  <p className="font-bold text-sm">{lm.name}</p>
-                  <p className="text-xs text-white/80 font-nepali">{lm.subtitle}</p>
-                </div>
               </div>
             ))}
           </div>
