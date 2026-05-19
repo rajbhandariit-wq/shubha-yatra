@@ -115,7 +115,7 @@ export default function LiveTrack() {
           <p className="font-semibold text-gray-800 text-sm truncate">
             {schedule?.route?.origin} → {schedule?.route?.destination}
           </p>
-          <p className="text-xs text-gray-400">{schedule?.bus?.name} · {schedule?.bus?.busNumber}</p>
+          <p className="text-xs text-gray-400">{schedule?.bus?.name} · {schedule?.bus?.registrationNumber}</p>
         </div>
         <span className={`text-xs font-medium px-2 py-1 rounded-full ${s.color}`}>{s.text}</span>
       </div>

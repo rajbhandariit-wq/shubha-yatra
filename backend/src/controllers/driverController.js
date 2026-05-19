@@ -12,7 +12,7 @@ exports.getTodaySchedules = async (req, res) => {
         journeyStatus: { [Op.notIn]: ['completed'] },
       },
       include: [
-        { model: Bus,  as: 'bus',   attributes: ['id', 'name', 'busNumber', 'type'] },
+        { model: Bus,  as: 'bus',   attributes: ['id', 'name', 'registrationNumber', 'type'] },
         { model: Route, as: 'route', attributes: ['id', 'name', 'origin', 'destination'] },
         { model: User,  as: 'driver', attributes: ['id', 'name', 'phoneNumber'], required: false },
       ],
@@ -119,7 +119,7 @@ exports.getMyActiveSchedule = async (req, res) => {
         journeyStatus: { [Op.in]: ['not_started', 'in_progress'] },
       },
       include: [
-        { model: Bus,   as: 'bus',   attributes: ['id', 'name', 'busNumber', 'type'] },
+        { model: Bus,   as: 'bus',   attributes: ['id', 'name', 'registrationNumber', 'type'] },
         { model: Route, as: 'route', attributes: ['id', 'name', 'origin', 'destination'] },
       ],
     });
@@ -137,7 +137,7 @@ exports.getPublicTracking = async (req, res) => {
       attributes: ['id', 'travelDate', 'departureTime', 'arrivalTime', 'status',
                    'journeyStatus', 'driverLocation', 'journeyStartedAt', 'delayMinutes'],
       include: [
-        { model: Bus,   as: 'bus',   attributes: ['name', 'busNumber', 'type'] },
+        { model: Bus,   as: 'bus',   attributes: ['name', 'registrationNumber', 'type'] },
         { model: Route, as: 'route', attributes: ['name', 'origin', 'destination'] },
         { model: User,  as: 'driver', attributes: ['name'], required: false },
       ],
