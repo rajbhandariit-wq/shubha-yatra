@@ -22,8 +22,10 @@ const sendViaSparrow = async (to, message) => {
   if (!SPARROW_TOKEN) throw new Error('SPARROW_SMS_TOKEN not set in .env');
   // SparrowSMS expects number without leading '+' e.g. 9779841234567
   const toClean = to.replace(/^\+/, '');
-  const payload = { token: SPARROW_TOKEN, from: SPARROW_FROM, to: toClean, text: message };
-  console.log('📱 SparrowSMS request → to:', toClean, '| from:', SPARROW_FROM);
+  const payload = SPARROW_FROM
+    ? { token: SPARROW_TOKEN, from: SPARROW_FROM, to: toClean, text: message }
+    : { token: SPARROW_TOKEN, to: toClean, text: message };
+  console.log('📱 SparrowSMS request → to:', toClean, '| from:', SPARROW_FROM || '(default)');
   const res = await fetch('https://api.sparrowsms.com/v2/sms/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
