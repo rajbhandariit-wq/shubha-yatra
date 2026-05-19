@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Play, Square, RefreshCw, Navigation, LogOut, Bus, Clock, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { driverAPI, appSettingsAPI } from '../../services/api';
+import { isNative, startNativeTracking, stopNativeTracking } from '../../services/nativeLocation';
 import { useAuth } from '../../contexts/AuthContext';
 
 const DEFAULT_LOCATION_INTERVAL_MS = 5 * 60 * 1000;
@@ -44,8 +45,9 @@ export default function DriverDashboard() {
     }).catch(() => {});
   }, [loadData]);
 
-  // Re-acquire wake lock after screen wakes up (e.g. after a call)
+  // Re-acquire wake lock after screen wakes up (e.g. after a call) — web only
   useEffect(() => {
+    if (isNative()) return;
     const reacquire = () => {
       if (mySchedule?.journeyStatus === 'in_progress' && 'wakeLock' in navigator) {
         navigator.wakeLock.request('screen')
@@ -68,6 +70,9 @@ export default function DriverDashboard() {
   }, [mySchedule?.id, mySchedule?.journeyStatus]);
 
   const startLocationTracking = () => {
+    // Native Android: foreground service handles GPS — nothing to do in JS
+    if (isNative()) return;
+
     if (!navigator.geolocation) {
       setLocStatus('error');
       setLocError('Geolocation not supported by this browser');
@@ -175,6 +180,11 @@ export default function DriverDashboard() {
     try {
       await driverAPI.startJourney(mySchedule.id);
       toast.success('Journey started! Location sharing active.');
+      if (isNative()) {
+        const token = localStorage.getItem('sy_token') || '';
+        startNativeTracking(mySchedule.id, token, locationIntervalMs)
+          .catch(err => toast.error('Background GPS failed: ' + err.message));
+      }
       loadData();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to start journey');
@@ -186,6 +196,9 @@ export default function DriverDashboard() {
     try {
       await driverAPI.endJourney(mySchedule.id);
       toast.success('Journey completed!');
+      if (isNative()) {
+        stopNativeTracking().catch(() => {});
+      }
       setMySchedule(null);
       loadData();
     } catch (err) {
