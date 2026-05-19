@@ -13,6 +13,7 @@ export default function DriverDashboard() {
   const [loading, setLoading]             = useState(true);
   const [locStatus, setLocStatus]         = useState('idle'); // idle | sending | ok | error
   const [lastLocAt, setLastLocAt]         = useState(null);
+  const [locError, setLocError]           = useState('');
   const [showAll, setShowAll]             = useState(false);
   const locationTimerRef                  = useRef(null);
   const watchIdRef                        = useRef(null);
@@ -46,13 +47,24 @@ export default function DriverDashboard() {
   }, [mySchedule?.id, mySchedule?.journeyStatus]);
 
   const startLocationTracking = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      setLocStatus('error');
+      setLocError('Geolocation not supported by this browser');
+      toast.error('This browser does not support GPS location');
+      return;
+    }
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      setLocStatus('error');
+      setLocError('HTTPS required for GPS — contact admin');
+      toast.error('GPS requires HTTPS. Ask your admin to enable SSL on the server.');
+      return;
+    }
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => { latestPosRef.current = pos.coords; },
       (err) => console.warn('GPS watch error:', err.message),
       { enableHighAccuracy: true, maximumAge: 30000 }
     );
-    sendLocation(); // send immediately
+    sendLocation();
     locationTimerRef.current = setInterval(sendLocation, LOCATION_INTERVAL_MS);
   };
 
@@ -68,6 +80,13 @@ export default function DriverDashboard() {
   const sendLocation = useCallback(async () => {
     if (!mySchedule?.id) return;
     setLocStatus('sending');
+
+    const GEO_ERRORS = {
+      1: 'Location permission denied — allow GPS in browser settings',
+      2: 'GPS signal unavailable',
+      3: 'GPS timed out',
+    };
+
     const sendCoords = (coords) => {
       driverAPI.updateLocation(mySchedule.id, {
         lat: coords.latitude,
@@ -76,8 +95,13 @@ export default function DriverDashboard() {
         speed: coords.speed,
       }).then(() => {
         setLocStatus('ok');
+        setLocError('');
         setLastLocAt(new Date());
-      }).catch(() => setLocStatus('error'));
+      }).catch((err) => {
+        const msg = err.response?.data?.message || 'Server rejected location update';
+        setLocStatus('error');
+        setLocError(msg);
+      });
     };
 
     if (latestPosRef.current) {
@@ -85,8 +109,12 @@ export default function DriverDashboard() {
     } else {
       navigator.geolocation.getCurrentPosition(
         (pos) => sendCoords(pos.coords),
-        () => setLocStatus('error'),
-        { enableHighAccuracy: true, timeout: 10000 }
+        (err) => {
+          const msg = GEO_ERRORS[err.code] || err.message || 'Unknown GPS error';
+          setLocStatus('error');
+          setLocError(msg);
+        },
+        { enableHighAccuracy: true, timeout: 15000 }
       );
     }
   }, [mySchedule?.id]);
@@ -192,7 +220,7 @@ export default function DriverDashboard() {
                 }`}>
                   <Navigation size={13} />
                   {locStatus === 'ok'      && `Location sent ${lastLocAt ? fmtTime(lastLocAt) : ''}`}
-                  {locStatus === 'error'   && 'Location error — retrying'}
+                  {locStatus === 'error'   && (locError || 'Location error')}
                   {locStatus === 'sending' && 'Sending location…'}
                   {locStatus === 'idle'    && 'Location sharing starting…'}
                   <button onClick={sendLocation} className="ml-auto underline">Send now</button>
