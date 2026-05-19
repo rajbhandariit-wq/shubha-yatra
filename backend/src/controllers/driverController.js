@@ -12,8 +12,8 @@ exports.getTodaySchedules = async (req, res) => {
         journeyStatus: { [Op.notIn]: ['completed'] },
       },
       include: [
-        { model: Bus,  as: 'bus',   attributes: ['id', 'name', 'registrationNumber', 'type'] },
-        { model: Route, as: 'route', attributes: ['id', 'source', 'destination'] },
+        { model: Bus,   as: 'bus',    attributes: ['id', 'name', 'registrationNumber', 'type'], where: { isActive: true }, required: true },
+        { model: Route, as: 'route',  attributes: ['id', 'source', 'destination'], where: { isActive: true }, required: true },
         { model: User,  as: 'driver', attributes: ['id', 'name', 'phoneNumber'], required: false },
       ],
       order: [['departureTime', 'ASC']],
