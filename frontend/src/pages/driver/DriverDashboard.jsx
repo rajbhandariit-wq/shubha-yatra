@@ -18,6 +18,7 @@ export default function DriverDashboard() {
   const locationTimerRef                  = useRef(null);
   const watchIdRef                        = useRef(null);
   const latestPosRef                      = useRef(null);
+  const wakeLockRef                       = useRef(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -35,6 +36,19 @@ export default function DriverDashboard() {
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Re-acquire wake lock after screen wakes up (e.g. after a call)
+  useEffect(() => {
+    const reacquire = () => {
+      if (mySchedule?.journeyStatus === 'in_progress' && 'wakeLock' in navigator) {
+        navigator.wakeLock.request('screen')
+          .then(lock => { wakeLockRef.current = lock; })
+          .catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', reacquire);
+    return () => document.removeEventListener('visibilitychange', reacquire);
+  }, [mySchedule?.journeyStatus]);
 
   // Start watching GPS when a journey is in_progress
   useEffect(() => {
@@ -59,6 +73,13 @@ export default function DriverDashboard() {
       toast.error('GPS requires HTTPS. Ask your admin to enable SSL on the server.');
       return;
     }
+    // Keep screen on while driving so GPS keeps running
+    if ('wakeLock' in navigator) {
+      navigator.wakeLock.request('screen')
+        .then(lock => { wakeLockRef.current = lock; })
+        .catch(err => console.warn('Wake lock failed:', err.message));
+    }
+
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => { latestPosRef.current = pos.coords; },
       (err) => console.warn('GPS watch error:', err.message),
@@ -75,6 +96,10 @@ export default function DriverDashboard() {
     }
     clearInterval(locationTimerRef.current);
     locationTimerRef.current = null;
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release().catch(() => {});
+      wakeLockRef.current = null;
+    }
   };
 
   const sendLocation = useCallback(async () => {
