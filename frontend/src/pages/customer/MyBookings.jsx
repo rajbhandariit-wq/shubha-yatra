@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Bus, MapPin, Calendar, ArrowRight, Ticket, XCircle, Eye, Clock, Filter } from 'lucide-react';
+import { Bus, MapPin, Calendar, ArrowRight, Ticket, XCircle, Eye, Clock, Filter, Navigation } from 'lucide-react';
 import { CATEGORY_META } from '../../utils/seatLayout';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -120,6 +120,11 @@ export default function MyBookings() {
                           ) : b.bookingStatus !== 'cancelled' && (
                             <Link to={`/ticket/${b.id}`} state={{ booking: b }} className="flex items-center gap-1.5 px-3 py-1.5 bg-nepal-blue text-white text-xs font-medium rounded-lg hover:bg-blue-700">
                               <Eye className="h-3.5 w-3.5" /> View Ticket
+                            </Link>
+                          )}
+                          {b.schedule?.journeyStatus === 'in_progress' && (
+                            <Link to={`/track/${b.schedule.id}`} target="_blank" className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 animate-pulse">
+                              <Navigation className="h-3.5 w-3.5" /> Live
                             </Link>
                           )}
                           {isCancellable && !travelPast && (
