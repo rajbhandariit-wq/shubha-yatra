@@ -268,10 +268,14 @@ exports.getBookings = async (req, res) => {
 // ============ STAFF ============
 exports.getStaff = async (req, res) => {
   try {
-    const staff = await Staff.findAll({ where: { providerId: req.user.id }, order: [['name', 'ASC']] });
+    const staff = await Staff.findAll({
+      where: { providerId: req.user.id },
+      order: [['name', 'ASC']],
+      include: [{ model: User, as: 'userAccount', attributes: ['id', 'email'], required: false }],
+    });
     res.json({ staff });
-  } catch (err) { 
-    res.status(500).json({ message: err.message }); 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -284,8 +288,23 @@ const sanitizeStaffDates = (body) => ({
 
 exports.createStaff = async (req, res) => {
   try {
-    const staff = await Staff.create({ ...sanitizeStaffDates(req.body), providerId: req.user.id });
-    res.status(201).json({ message: 'Staff added', staff });
+    const { email, password, ...rest } = req.body;
+    const body = sanitizeStaffDates(rest);
+
+    let userId = null;
+    if (body.role === 'driver') {
+      if (!email || !password) return res.status(400).json({ message: 'Email and password are required for driver accounts' });
+      const existing = await User.findOne({ where: { email } });
+      if (existing) return res.status(400).json({ message: 'Email already in use' });
+      const driverUser = await User.create({ name: body.name, email, password, role: 'driver', phoneNumber: body.phone });
+      userId = driverUser.id;
+    }
+
+    const staff = await Staff.create({ ...body, providerId: req.user.id, userId });
+    const staffWithAccount = await Staff.findByPk(staff.id, {
+      include: [{ model: User, as: 'userAccount', attributes: ['id', 'email'], required: false }],
+    });
+    res.status(201).json({ message: 'Staff added', staff: staffWithAccount });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -295,8 +314,20 @@ exports.updateStaff = async (req, res) => {
   try {
     const staff = await Staff.findOne({ where: { id: req.params.id, providerId: req.user.id } });
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
-    await staff.update(sanitizeStaffDates(req.body));
-    res.json({ message: 'Staff updated', staff });
+
+    const { email, password, newPassword, ...rest } = req.body;
+    await staff.update(sanitizeStaffDates(rest));
+
+    // Update linked driver User account if password reset requested
+    if (staff.userId && newPassword) {
+      const driverUser = await User.findByPk(staff.userId);
+      if (driverUser) await driverUser.update({ password: newPassword });
+    }
+
+    const updated = await Staff.findByPk(staff.id, {
+      include: [{ model: User, as: 'userAccount', attributes: ['id', 'email'], required: false }],
+    });
+    res.json({ message: 'Staff updated', staff: updated });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -307,9 +338,10 @@ exports.deleteStaff = async (req, res) => {
     const staff = await Staff.findOne({ where: { id: req.params.id, providerId: req.user.id } });
     if (!staff) return res.status(404).json({ message: 'Staff not found' });
     await staff.update({ isActive: false });
+    if (staff.userId) await User.update({ isActive: false }, { where: { id: staff.userId } });
     res.json({ message: 'Staff deactivated' });
-  } catch (err) { 
-    res.status(500).json({ message: err.message }); 
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 

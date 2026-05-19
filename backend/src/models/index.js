@@ -34,6 +34,9 @@ Booking.belongsTo(Schedule,{ foreignKey: 'scheduleId', as: 'schedule' });
 User.hasMany(Staff,    { foreignKey: 'providerId', as: 'staff' });
 Staff.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 
+Staff.belongsTo(User, { foreignKey: 'userId', as: 'userAccount' });
+User.hasOne(Staff,    { foreignKey: 'userId',    as: 'staffProfile' });
+
 User.hasMany(Notification, { foreignKey: 'senderId', as: 'notifications' });
 
 User.hasMany(InAppNotification, { foreignKey: 'userId', as: 'inAppNotifications' });

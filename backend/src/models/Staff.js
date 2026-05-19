@@ -12,7 +12,8 @@ module.exports = (sequelize) => {
     address: { type: DataTypes.TEXT, allowNull: true },
     isActive: { type: DataTypes.BOOLEAN, defaultValue: true },
     joiningDate: { type: DataTypes.DATEONLY, allowNull: true },
-    salary: { type: DataTypes.DECIMAL(10, 2), allowNull: true }
+    salary: { type: DataTypes.DECIMAL(10, 2), allowNull: true },
+    userId: { type: DataTypes.UUID, allowNull: true },
   });
   return Staff;
 };
