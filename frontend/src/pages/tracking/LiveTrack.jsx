@@ -4,7 +4,8 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getPublicTracking } from '../../services/api';
-import { MapPin, Bus, Clock, RefreshCw, ChevronLeft, Navigation } from 'lucide-react';
+import { MapPin, Bus, Clock, RefreshCw, ChevronLeft, Navigation, Share2, Copy } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 // Fix leaflet default icon paths broken by webpack/vite bundling
 delete L.Icon.Default.prototype._getIconUrl;
@@ -58,6 +59,19 @@ export default function LiveTrack() {
     const interval = setInterval(fetchTracking, REFRESH_INTERVAL);
     return () => clearInterval(interval);
   }, [fetchTracking]);
+
+  const shareLink = async () => {
+    const url = window.location.href;
+    const text = `Track live bus: ${schedule?.route?.source} → ${schedule?.route?.destination} | Shubha Yatra`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Live Bus Tracking', text, url });
+      } catch {}
+    } else {
+      navigator.clipboard?.writeText(url);
+      toast.success('Link copied to clipboard!');
+    }
+  };
 
   // Countdown ticker
   useEffect(() => {
@@ -118,6 +132,9 @@ export default function LiveTrack() {
           <p className="text-xs text-gray-400">{schedule?.bus?.name} · {schedule?.bus?.registrationNumber}</p>
         </div>
         <span className={`text-xs font-medium px-2 py-1 rounded-full ${s.color}`}>{s.text}</span>
+        <button onClick={shareLink} className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:bg-gray-100" title="Share live link">
+          <Share2 size={18} />
+        </button>
       </div>
 
       {/* Map */}
