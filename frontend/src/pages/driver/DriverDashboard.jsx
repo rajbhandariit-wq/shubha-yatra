@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Play, Square, RefreshCw, Navigation, LogOut, Bus, Clock, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { driverAPI } from '../../services/api';
+import { driverAPI, appSettingsAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 
-const LOCATION_INTERVAL_MS = 5 * 60 * 1000; // send location every 5 minutes
+const DEFAULT_LOCATION_INTERVAL_MS = 5 * 60 * 1000;
 
 export default function DriverDashboard() {
   const { user, logout } = useAuth();
@@ -15,6 +15,7 @@ export default function DriverDashboard() {
   const [lastLocAt, setLastLocAt]         = useState(null);
   const [locError, setLocError]           = useState('');
   const [showAll, setShowAll]             = useState(false);
+  const [locationIntervalMs, setLocationIntervalMs] = useState(DEFAULT_LOCATION_INTERVAL_MS);
   const locationTimerRef                  = useRef(null);
   const watchIdRef                        = useRef(null);
   const latestPosRef                      = useRef(null);
@@ -35,7 +36,13 @@ export default function DriverDashboard() {
     }
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+    appSettingsAPI.get().then(r => {
+      const mins = parseInt(r.data.location_interval_minutes, 10);
+      if (mins > 0) setLocationIntervalMs(mins * 60 * 1000);
+    }).catch(() => {});
+  }, [loadData]);
 
   // Re-acquire wake lock after screen wakes up (e.g. after a call)
   useEffect(() => {
@@ -86,7 +93,7 @@ export default function DriverDashboard() {
       { enableHighAccuracy: true, maximumAge: 30000 }
     );
     sendLocation();
-    locationTimerRef.current = setInterval(sendLocation, LOCATION_INTERVAL_MS);
+    locationTimerRef.current = setInterval(sendLocation, locationIntervalMs);
   };
 
   const stopLocationTracking = () => {

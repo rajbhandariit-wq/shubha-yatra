@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getPublicTracking } from '../../services/api';
+import { getPublicTracking, appSettingsAPI } from '../../services/api';
 import { MapPin, Bus, Clock, RefreshCw, ChevronLeft, Navigation, Share2, Copy } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -30,7 +30,7 @@ function FlyToMarker({ lat, lng }) {
   return null;
 }
 
-const REFRESH_INTERVAL = 60 * 1000; // 60 seconds
+const DEFAULT_REFRESH_INTERVAL = 60 * 1000;
 
 export default function LiveTrack() {
   const { scheduleId } = useParams();
@@ -39,6 +39,7 @@ export default function LiveTrack() {
   const [error, setError]           = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [countdown, setCountdown]   = useState(60);
+  const [refreshInterval, setRefreshInterval] = useState(DEFAULT_REFRESH_INTERVAL);
 
   const fetchTracking = useCallback(async () => {
     try {
@@ -55,10 +56,20 @@ export default function LiveTrack() {
   }, [scheduleId]);
 
   useEffect(() => {
+    appSettingsAPI.get().then(r => {
+      const secs = parseInt(r.data.tracking_refresh_seconds, 10);
+      if (secs > 0) {
+        setRefreshInterval(secs * 1000);
+        setCountdown(secs);
+      }
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     fetchTracking();
-    const interval = setInterval(fetchTracking, REFRESH_INTERVAL);
+    const interval = setInterval(fetchTracking, refreshInterval);
     return () => clearInterval(interval);
-  }, [fetchTracking]);
+  }, [fetchTracking, refreshInterval]);
 
   const shareLink = async () => {
     const url = window.location.href;
@@ -73,11 +84,13 @@ export default function LiveTrack() {
     }
   };
 
-  // Countdown ticker
+  // Countdown ticker — resets to full interval on each refresh
   useEffect(() => {
-    const t = setInterval(() => setCountdown(c => (c > 0 ? c - 1 : 60)), 1000);
+    const secs = Math.round(refreshInterval / 1000);
+    setCountdown(secs);
+    const t = setInterval(() => setCountdown(c => (c > 0 ? c - 1 : secs)), 1000);
     return () => clearInterval(t);
-  }, [lastRefresh]);
+  }, [lastRefresh, refreshInterval]);
 
   const loc = schedule?.driverLocation;
   const hasLocation = loc?.lat && loc?.lng;

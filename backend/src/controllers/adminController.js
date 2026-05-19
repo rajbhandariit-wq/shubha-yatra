@@ -1,8 +1,31 @@
 const { Op } = require('sequelize');
-const { User, Bus, Route, Booking, Schedule, Staff, sequelize } = require('../models');
+const { User, Bus, Route, Booking, Schedule, Staff, BillingSetting, sequelize } = require('../models');
 const { sendTicketEmail } = require('../services/emailService');
 const { sendTicketSMS }   = require('../services/smsService');
 const billing = require('../services/billingService');
+
+const APP_SETTING_KEYS = ['location_interval_minutes', 'tracking_refresh_seconds'];
+const APP_SETTING_DEFAULTS = { location_interval_minutes: '5', tracking_refresh_seconds: '60' };
+
+exports.getAppSettings = async (req, res) => {
+  try {
+    const rows = await BillingSetting.findAll({ where: { key: { [Op.in]: APP_SETTING_KEYS } } });
+    const result = { ...APP_SETTING_DEFAULTS };
+    rows.forEach(r => { result[r.key] = r.value; });
+    res.json(result);
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
+exports.updateAppSettings = async (req, res) => {
+  try {
+    for (const key of APP_SETTING_KEYS) {
+      if (req.body[key] !== undefined) {
+        await BillingSetting.upsert({ key, value: String(req.body[key]) });
+      }
+    }
+    res.json({ message: 'Settings saved' });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
 
 exports.getAllUsers = async (req, res) => {
   try {

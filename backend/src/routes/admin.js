@@ -40,4 +40,8 @@ router.get('/providers/pending',       ...auth, ctrl.getPendingProviders);
 router.put('/providers/:id/approve',   ...auth, ctrl.approveProvider);
 router.put('/providers/:id/reject',    ...auth, ctrl.rejectProvider);
 
+// App settings (interval config etc.)
+router.get('/app-settings',        ...auth,       ctrl.getAppSettings);
+router.put('/app-settings',        ...superAdmin, ctrl.updateAppSettings);
+
 module.exports = router;

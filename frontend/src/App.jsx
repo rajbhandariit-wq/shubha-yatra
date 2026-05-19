@@ -105,7 +105,7 @@ function AppRoutes() {
     <ScrollToTop />
     <BackButtonHandler />
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={user?.role === 'driver' ? <Navigate to="/driver" replace /> : <Home />} />
       <Route path="/login" element={user ? <Navigate to={user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : user.role === 'driver' ? '/driver' : '/'} /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
       <Route path="/search" element={<SearchResults />} />

@@ -142,6 +142,12 @@ export const driverAPI = {
 // Public tracking (no auth)
 export const getPublicTracking = (scheduleId) => api.get(`/track/${scheduleId}`);
 
+// App settings (public read, admin write)
+export const appSettingsAPI = {
+  get:    ()     => api.get('/app-settings'),
+  update: (data) => api.put('/admin/app-settings', data),
+};
+
 // In-App Notifications
 export const notificationAPI = {
   getAll:      () => api.get('/notifications'),

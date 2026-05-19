@@ -13,6 +13,7 @@ const billingRoutes = require('./src/routes/billing');
 const notificationRoutes = require('./src/routes/notifications');
 const driverRoutes        = require('./src/routes/driver');
 const { getPublicTracking } = require('./src/controllers/driverController');
+const { getAppSettings }   = require('./src/controllers/adminController');
 const { start: startScheduler } = require('./src/jobs/payoutScheduler');
 const { start: startCleanup } = require('./src/jobs/scheduleCleanup');
 
@@ -33,6 +34,7 @@ app.use('/api/admin/billing', billingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/driver', driverRoutes);
 app.get('/api/track/:scheduleId', getPublicTracking);
+app.get('/api/app-settings', getAppSettings);
 
 app.get('/api/health', (req, res) => res.json({ status: 'OK', app: 'Shubha Yatra API' }));
 
