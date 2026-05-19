@@ -3,7 +3,7 @@
 
 const PROVIDER      = process.env.SMS_PROVIDER        || 'console';
 const SPARROW_TOKEN = process.env.SPARROW_SMS_TOKEN    || '';
-const SPARROW_FROM  = process.env.SPARROW_SMS_FROM     || 'ShubhaYatra';
+const SPARROW_FROM  = process.env.SPARROW_SMS_FROM     ?? '';
 const TEXTBELT_KEY  = process.env.TEXTBELT_KEY         || 'textbelt'; // 'textbelt' = 1 free/day
 
 // Normalize to Nepal international format (+977XXXXXXXXXX)
