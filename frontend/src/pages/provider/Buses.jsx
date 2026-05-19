@@ -72,11 +72,13 @@ export default function ProviderBuses() {
     const rightCols   = sl?.rightCols   ?? 2;
     const regularRows = sl?.regularRows ?? 10;
     const backRowSeats = sl?.backRowSeats ?? 0;
-    const isCustomType = b.type && !['AC', 'Non-AC', 'Sleeper', 'Deluxe', 'Super-Deluxe'].includes(b.type);
+    const knownTypes = ['AC', 'Non-AC', 'Sleeper', 'Deluxe', 'Super-Deluxe'];
+    const isCustomType = b.type && !knownTypes.includes(b.type);
+    const resolvedCategory = isCustomType ? 'others' : (busCategory || 'standard');
     const f = {
       name: b.name,
       registrationNumber: b.registrationNumber,
-      busCategory,
+      busCategory: resolvedCategory,
       type: isCustomType ? 'Others' : (b.type || 'Non-AC'),
       customType: isCustomType ? b.type : 'Tata Sumo',
       amenities: b.amenities || [],
@@ -106,7 +108,7 @@ export default function ProviderBuses() {
     setSaving(true);
     try {
       const totalSeats = form.seatLayout?.totalSeats || form.seatLayout?.seats?.length || 0;
-      const resolvedType = form.type === 'Others'
+      const resolvedType = (form.busCategory === 'others' || form.type === 'Others')
         ? (form.customType.trim() || 'Tata Sumo')
         : form.type;
       const payload = {
@@ -321,16 +323,27 @@ export default function ProviderBuses() {
 
                 {/* Template presets */}
                 <div>
-                  <label className="label">Start from template</label>
-                  <div className="flex gap-2">
+                  <label className="label">Vehicle Type</label>
+                  <div className="flex flex-wrap gap-2">
                     {Object.entries(BUS_CATEGORIES).map(([id, cat]) => (
                       <button key={id} type="button" onClick={() => handleCategoryChange(id)}
-                        className={`flex-1 rounded-xl border-2 py-2 px-3 text-left text-xs transition-all ${form.busCategory === id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 hover:border-gray-300 text-gray-600'}`}>
+                        className={`flex-1 min-w-[80px] rounded-xl border-2 py-2 px-3 text-left text-xs transition-all ${form.busCategory === id ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 hover:border-gray-300 text-gray-600'}`}>
                         <div className="font-bold">{cat.label}</div>
                         <div className="text-gray-400">{cat.description}</div>
                       </button>
                     ))}
                   </div>
+                  {form.busCategory === 'others' && (
+                    <div className="mt-3">
+                      <label className="label">Vehicle Name</label>
+                      <input
+                        value={form.customType}
+                        onChange={e => setForm(f => ({ ...f, customType: e.target.value }))}
+                        className="input-field"
+                        placeholder="e.g. Tata Sumo, Hiace, Bolero..."
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Layout controls */}

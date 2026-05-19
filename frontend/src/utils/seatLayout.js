@@ -29,6 +29,14 @@ export const BUS_CATEGORIES = {
     rightCols: 1,
     defaultRows: 5,
   },
+  others: {
+    label: 'Others',
+    description: '1-1 layout · Tata Sumo, Hiace…',
+    layoutType: '1-1',
+    leftCols: 1,
+    rightCols: 1,
+    defaultRows: 4,
+  },
 };
 
 /**
