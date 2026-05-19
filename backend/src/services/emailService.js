@@ -1,9 +1,7 @@
 const { Resend } = require('resend');
-const QRCode = require('qrcode');
-const fs = require('fs');
-const path = require('path');
 
-const logoPath = path.join(__dirname, '../../../frontend/public/images/Android_logo_new.png');
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const LOGO_URL     = `${FRONTEND_URL}/images/Android_logo_new.png`;
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM || 'noreply@shubha-yatra.com';
@@ -13,27 +11,13 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
     ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
     : 'N/A';
 
-  // Generate QR code as buffer — data: URIs are blocked by Gmail
-  const qrBuffer = await QRCode.toBuffer(
-    JSON.stringify({ ticketNumber, route, date, departureTime, passengers }),
-    { width: 260, margin: 1 }
-  );
-
-  // Build CID attachments (inline images referenced via cid: in HTML)
-  const attachments = [
-    { filename: 'qrcode.png', content: qrBuffer.toString('base64'), content_id: 'qrcode@sy' },
-  ];
-  let hasLogo = false;
-  try {
-    const logoBuffer = fs.readFileSync(logoPath);
-    attachments.push({ filename: 'logo.png', content: logoBuffer.toString('base64'), content_id: 'logo@sy' });
-    hasLogo = true;
-  } catch { /* logo not found — header falls back to text */ }
+  // QR code via hosted URL — works in all email clients including Gmail
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=${encodeURIComponent(ticketNumber)}`;
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
-        ${hasLogo ? `<img src="cid:logo@sy" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 8px;" />` : ''}
+        <img src="${LOGO_URL}" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 8px;" />
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
         <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
@@ -46,7 +30,7 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
               <p style="margin:0; color:#555; font-size:14px;">Your ticket has been confirmed. Safe travels!</p>
             </td>
             <td style="vertical-align:middle; text-align:center; white-space:nowrap; width:150px;">
-              <img src="cid:qrcode@sy" alt="QR Code" style="width:130px; height:130px; border-radius:8px; display:block;" />
+              <img src="${qrUrl}" alt="QR Code" style="width:130px; height:130px; border-radius:8px; display:block;" />
               <p style="font-size:10px; color:#888; margin:4px 0 0;">Scan to verify</p>
             </td>
           </tr>
@@ -78,7 +62,6 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
       to,
       subject: `🎫 Booking Confirmed - ${ticketNumber} | Shubha Yatra`,
       html,
-      attachments,
     });
     if (error) throw new Error(error.message);
     console.log('📧 Ticket email sent to:', to, '| id:', data.id);
