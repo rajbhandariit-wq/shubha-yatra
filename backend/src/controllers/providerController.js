@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Bus, Route, Schedule, Booking, Staff, User, Notification } = require('../models');
+const { Bus, Route, Schedule, Booking, Staff, User, Notification, InAppNotification } = require('../models');
 const { sendGenericEmail } = require('../services/emailService');
 const { sendAlertSMS } = require('../services/smsService');
 
@@ -324,9 +324,9 @@ exports.sendMessage = async (req, res) => {
     if (scheduleId) {
       const bookings = await Booking.findAll({
         where: { scheduleId, bookingStatus: { [Op.in]: ['confirmed'] } },
-        include: [{ model: User, as: 'customer', attributes: ['name', 'email', 'phoneNumber'] }]
+        include: [{ model: User, as: 'customer', attributes: ['id', 'name', 'email', 'phoneNumber'] }]
       });
-      recipients = bookings.map(b => ({ name: b.customer.name, email: b.customer.email, phoneNumber: b.customer.phoneNumber }));
+      recipients = bookings.map(b => ({ userId: b.customer.id, name: b.customer.name, email: b.customer.email, phoneNumber: b.customer.phoneNumber }));
     }
 
     if (type === 'Email' || type === 'Both') {
@@ -344,6 +344,19 @@ exports.sendMessage = async (req, res) => {
       recipients: recipients.map(r => ({ email: r.email, phoneNumber: r.phoneNumber })),
       scheduleId: scheduleId || null, status: 'sent'
     });
+
+    // Create in-app notifications for each recipient customer
+    for (const r of recipients) {
+      if (r.userId) {
+        InAppNotification.create({
+          userId: r.userId,
+          title: subject || 'Message from Your Bus Operator',
+          message,
+          type: 'provider_message',
+          relatedId: scheduleId || null,
+        }).catch(err => console.error('[Notif] customer provider_message failed:', err.message));
+      }
+    }
 
     res.json({ message: `Message sent to ${recipients.length} recipients`, notification });
   } catch (err) { 

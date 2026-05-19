@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 import { Ticket } from "lucide-react";
+import NotificationBell from './NotificationBell';
 
 const links = [
   { to: '/provider', icon: LayoutDashboard, label: 'Dashboard', exact: true },
@@ -102,7 +103,8 @@ export default function ProviderLayout({ children, title }) {
             <button className="lg:hidden p-2 text-gray-600" onClick={() => setSidebarOpen(true)}><Menu className="h-5 w-5" /></button>
             <h1 className="text-xl font-bold text-gray-800">{title}</h1>
           </div>
-          <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <NotificationBell dark />
             <div className="w-8 h-8 bg-nepal-red rounded-full flex items-center justify-center text-white text-xs font-bold">{user?.name?.[0]}</div>
             <span className="hidden sm:block">{user?.companyName || user?.name}</span>
           </div>

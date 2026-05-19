@@ -10,6 +10,7 @@ const OperatorBalance    = require('./OperatorBalance')(sequelize);
 const BillingTransaction = require('./BillingTransaction')(sequelize);
 const PayoutBatch        = require('./PayoutBatch')(sequelize);
 const BillingSetting     = require('./BillingSetting')(sequelize);
+const InAppNotification  = require('./InAppNotification')(sequelize);
 
 // ── Core associations ────────────────────────────────────────────────────────
 User.hasMany(Bus,      { foreignKey: 'providerId', as: 'buses' });
@@ -35,6 +36,9 @@ Staff.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
 
 User.hasMany(Notification, { foreignKey: 'senderId', as: 'notifications' });
 
+User.hasMany(InAppNotification, { foreignKey: 'userId', as: 'inAppNotifications' });
+InAppNotification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // ── Billing associations ─────────────────────────────────────────────────────
 User.hasOne(OperatorBalance,  { foreignKey: 'providerId', as: 'operatorBalance' });
 OperatorBalance.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
@@ -52,6 +56,6 @@ BillingTransaction.belongsTo(PayoutBatch, { foreignKey: 'batchId', as: 'batch' }
 
 module.exports = {
   sequelize,
-  User, Bus, Route, Schedule, Booking, Staff, Notification,
+  User, Bus, Route, Schedule, Booking, Staff, Notification, InAppNotification,
   OperatorBalance, BillingTransaction, PayoutBatch, BillingSetting,
 };

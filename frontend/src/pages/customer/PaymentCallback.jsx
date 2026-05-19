@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { XCircle } from 'lucide-react';
+import { XCircle, Clock } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import { paymentAPI } from '../../services/api';
+import toast from 'react-hot-toast';
 
 export default function PaymentCallback() {
   const [params]  = useSearchParams();
@@ -12,7 +13,8 @@ export default function PaymentCallback() {
 
   useEffect(() => {
     const gateway    = params.get('gateway');
-    const bookingStr = params.get('bookingIds');
+    const bookingStr = params.get('bookingIds') ||
+      (params.get('gateway') === 'khalti' ? localStorage.getItem('khalti_bookingIds') : null);
     const bookingIds = bookingStr?.split(',').filter(Boolean) || [];
 
     const fail = (msg) => {
@@ -43,6 +45,14 @@ export default function PaymentCallback() {
           const res = await paymentAPI.verifyKhalti({ pidx, bookingIds });
           sessionStorage.removeItem('sy_payment_ctx');
           sessionStorage.removeItem('khalti_pidx');
+          localStorage.removeItem('khalti_bookingIds');
+
+          if (res.data.pending) {
+            toast('Your payment is being processed. Seats are reserved — check My Bookings for confirmation.', { duration: 8000, icon: '⏳' });
+            navigate('/my-bookings', { replace: true });
+            return;
+          }
+
           const bookings = res.data.bookings;
           navigate('/tickets', { state: { bookings, isRoundTrip: bookings.length > 1 }, replace: true });
 

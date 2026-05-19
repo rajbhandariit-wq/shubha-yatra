@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { Schedule, Bus, Route, Booking, User } = require('../models');
+const { Schedule, Bus, Route, Booking, User, InAppNotification } = require('../models');
 const { sendTicketEmail } = require('../services/emailService');
 const { sendTicketSMS } = require('../services/smsService');
 const { v4: uuidv4 } = require('uuid');
@@ -268,6 +268,24 @@ exports.cancelBooking = async (req, res) => {
 
     await booking.update({ bookingStatus: 'cancelled', paymentStatus: 'refunded', cancellationReason: reason || 'Customer cancelled', cancelledAt: new Date() });
     await booking.schedule.update({ availableSeats: booking.schedule.availableSeats + booking.seats.length });
+
+    // Notify provider
+    const scheduleWithBus = await Schedule.findByPk(booking.scheduleId, {
+      include: [
+        { model: Bus, as: 'bus', attributes: ['providerId'] },
+        { model: Route, as: 'route', attributes: ['source', 'destination'] },
+      ],
+    });
+    if (scheduleWithBus?.bus?.providerId) {
+      const route = `${scheduleWithBus.route.source} → ${scheduleWithBus.route.destination}`;
+      InAppNotification.create({
+        userId: scheduleWithBus.bus.providerId,
+        title: 'Booking Cancelled by Customer',
+        message: `Ticket #${booking.ticketNumber} for ${route} on ${booking.schedule.travelDate} has been cancelled. Seats ${booking.seats.join(', ')} are now available.`,
+        type: 'booking_cancelled',
+        relatedId: booking.id,
+      }).catch(err => console.error('[Notif] provider booking_cancelled failed:', err.message));
+    }
 
     res.json({ message: 'Booking cancelled and refund initiated', booking });
   } catch (err) {

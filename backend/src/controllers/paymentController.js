@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const { v4: uuidv4 } = require('uuid');
 const { Op } = require('sequelize');
-const { Booking, Schedule, Bus, Route, User } = require('../models');
+const { Booking, Schedule, Bus, Route, User, InAppNotification } = require('../models');
 const { sendTicketEmail, sendPendingBankEmail } = require('../services/emailService');
 const { sendTicketSMS, sendPendingBankSMS }   = require('../services/smsService');
 const billing = require('../services/billingService');
@@ -25,7 +25,7 @@ const genTicket = () => `SY${Date.now().toString(36).toUpperCase()}${Math.random
 
 async function buildPendingBooking(scheduleId, seats, passengerDetails, customerId, paymentMethod, transactionId) {
   const schedule = await Schedule.findByPk(scheduleId, {
-    include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }]
+    include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }]
   });
   if (!schedule) throw new Error('Schedule not found');
 
@@ -59,7 +59,7 @@ async function buildPendingBooking(scheduleId, seats, passengerDetails, customer
 async function confirmBookings(bookingIds, paymentReference) {
   const bookings = await Booking.findAll({
     where: { id: { [Op.in]: bookingIds } },
-    include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
+    include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['id', 'name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
   });
 
   await Promise.all(bookings.map(b => b.update({
@@ -73,6 +73,21 @@ async function confirmBookings(bookingIds, paymentReference) {
     billing.createTransactionForBooking(b, b.schedule).catch(err =>
       console.error('[Billing] createTransaction failed:', err.message)
     );
+  }
+
+  // Notify provider of each new booking (fire-and-forget)
+  for (const b of bookings) {
+    const route = `${b.schedule.route.source} → ${b.schedule.route.destination}`;
+    const providerId = b.schedule.bus?.provider?.id || b.schedule.bus?.providerId;
+    if (providerId) {
+      InAppNotification.create({
+        userId: providerId,
+        title: 'New Booking Received',
+        message: `Ticket #${b.ticketNumber} — ${route} on ${b.schedule.travelDate}. Seats: ${b.seats.join(', ')}.`,
+        type: 'new_booking',
+        relatedId: b.id,
+      }).catch(err => console.error('[Notif] provider new_booking failed:', err.message));
+    }
   }
 
   for (const booking of bookings) {
@@ -254,19 +269,23 @@ exports.verifyKhalti = async (req, res) => {
     });
     const data = await resp.json();
 
-    if (data.status !== 'Completed') {
-      await cancelBookings(bookingIds);
-      return res.status(400).json({ message: `Khalti payment status: ${data.status}`, raw: data });
+    if (data.status === 'Completed') {
+      await confirmBookings(bookingIds, data.transaction_id);
+      const fullBookings = await Booking.findAll({
+        where: { id: { [Op.in]: bookingIds } },
+        include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
+      });
+      return res.json({ success: true, bookings: fullBookings });
     }
 
-    await confirmBookings(bookingIds, data.transaction_id);
+    if (data.status === 'Pending') {
+      // Bank transfer is still being processed — keep the booking reserved
+      return res.json({ success: true, pending: true, message: 'Your payment is being processed by your bank. Your seats are reserved.' });
+    }
 
-    const fullBookings = await Booking.findAll({
-      where: { id: { [Op.in]: bookingIds } },
-      include: [{ model: Schedule, as: 'schedule', include: [{ model: Bus, as: 'bus', include: [{ model: User, as: 'provider', attributes: ['name', 'companyName', 'phoneNumber'] }] }, { model: Route, as: 'route' }] }]
-    });
-
-    res.json({ success: true, bookings: fullBookings });
+    // User canceled, Expired, or unknown failure — release the seats
+    await cancelBookings(bookingIds);
+    return res.status(400).json({ message: `Payment ${data.status || 'failed'}.`, raw: data });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -194,6 +194,7 @@ function PaymentInner() {
         // Save full context so PaymentFailed can restore it for "Try Again"
         sessionStorage.setItem('sy_payment_ctx', JSON.stringify(location.state));
         sessionStorage.setItem('khalti_pidx', pidx);
+        localStorage.setItem('khalti_bookingIds', bookingIds.join(','));
         window.location.href = paymentUrl;
 
       } else if (payMethod === 'bank') {

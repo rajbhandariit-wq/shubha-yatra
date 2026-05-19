@@ -128,6 +128,13 @@ export const billingAPI = {
   updateSettings:      (d)         => api.put('/admin/billing/settings', d),
 };
 
+// In-App Notifications
+export const notificationAPI = {
+  getAll:      () => api.get('/notifications'),
+  markRead:    (id) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
+};
+
 // Admin
 export const adminAPI = {
   getDashboard: () => api.get('/admin/dashboard'),

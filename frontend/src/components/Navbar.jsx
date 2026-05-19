@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Bus, Menu, X, User, LogOut, Ticket, LayoutDashboard, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -101,6 +102,8 @@ export default function Navbar() {
               <Link to="/register" className="bg-nepal-red hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Register</Link>
             </>}
             {user && (
+              <div className="flex items-center gap-2">
+              <NotificationBell />
               <div className="relative">
                 <button onClick={() => setDropOpen(!dropOpen)} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all">
                   <div className="w-7 h-7 bg-nepal-red rounded-full flex items-center justify-center text-xs font-bold">{user.name?.[0]?.toUpperCase()}</div>
@@ -127,9 +130,10 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
+              </div>
             )}
           </div>
-          
+
           {/* Mobile hamburger */}
           <button className="md:hidden text-white p-2" onClick={() => setMenuOpen(!menuOpen)}>
             {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
