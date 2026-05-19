@@ -4,13 +4,6 @@ const fs = require('fs');
 const path = require('path');
 
 const logoPath = path.join(__dirname, '../../../frontend/public/images/Android_logo_new.png');
-let logoDataUrl = '';
-try {
-  const logoBuffer = fs.readFileSync(logoPath);
-  logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`;
-} catch {
-  // logo file not found — email header will fall back to text only
-}
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = process.env.EMAIL_FROM || 'noreply@shubha-yatra.com';
@@ -19,12 +12,28 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
   const passengerList = passengers.length
     ? passengers.map((p, i) => `${i + 1}. ${p.name || p}`).join('<br/>')
     : 'N/A';
-  const qrCode = await QRCode.toDataURL(JSON.stringify({ ticketNumber, route, date, departureTime, passengers }));
+
+  // Generate QR code as buffer — data: URIs are blocked by Gmail
+  const qrBuffer = await QRCode.toBuffer(
+    JSON.stringify({ ticketNumber, route, date, departureTime, passengers }),
+    { width: 260, margin: 1 }
+  );
+
+  // Build CID attachments (inline images referenced via cid: in HTML)
+  const attachments = [
+    { filename: 'qrcode.png', content: qrBuffer.toString('base64'), content_id: 'qrcode@sy' },
+  ];
+  let hasLogo = false;
+  try {
+    const logoBuffer = fs.readFileSync(logoPath);
+    attachments.push({ filename: 'logo.png', content: logoBuffer.toString('base64'), content_id: 'logo@sy' });
+    hasLogo = true;
+  } catch { /* logo not found — header falls back to text */ }
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 2px solid #DC143C; border-radius: 8px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #DC143C, #003893); padding: 20px; text-align: center; color: white;">
-        ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Shubha Yatra" style="height:120px; width:auto; display:block; margin:0 auto 6px;" />` : ''}
+        ${hasLogo ? `<img src="cid:logo@sy" alt="Shubha Yatra" style="height:80px; width:auto; display:block; margin:0 auto 8px;" />` : ''}
         <h1 style="margin:0; font-size:24px; letter-spacing:1px;">Shubha Yatra</h1>
         <p style="margin:4px 0 0; font-size:13px; opacity:0.85;">शुभ यात्रा — Your Safe Journey Partner</p>
       </div>
@@ -37,14 +46,13 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
               <p style="margin:0; color:#555; font-size:14px;">Your ticket has been confirmed. Safe travels!</p>
             </td>
             <td style="vertical-align:middle; text-align:center; white-space:nowrap; width:150px;">
-              <img src="${qrCode}" style="width:130px; height:130px; border-radius:8px; display:block;" />
+              <img src="cid:qrcode@sy" alt="QR Code" style="width:130px; height:130px; border-radius:8px; display:block;" />
               <p style="font-size:10px; color:#888; margin:4px 0 0;">Scan to verify</p>
             </td>
           </tr>
         </table>
       </div>
       <div style="padding: 12px 24px 24px;">
-
         <table style="width:100%; border-collapse: collapse; margin: 16px 0;">
           <tr style="background:#f5f5f5;"><td style="padding:8px; font-weight:bold; width:40%;">Ticket No.</td><td style="padding:8px; font-family:monospace; font-weight:bold;">${ticketNumber}</td></tr>
           <tr><td style="padding:8px; font-weight:bold;">Route</td><td style="padding:8px;">${route}</td></tr>
@@ -59,7 +67,6 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
         </table>
         <p style="color:#666; font-size:12px; margin-top:16px;">Please arrive 15 minutes before departure. शुभ यात्रा! 🙏</p>
       </div>
-
       <div style="background:#003893; color:white; text-align:center; padding:12px; font-size:12px;">
         © 2025 Shubha Yatra | Nepal's Trusted Bus Booking Platform
       </div>
@@ -68,7 +75,10 @@ const sendTicketEmail = async ({ to, name, ticketNumber, route, date, departureT
   try {
     const { data, error } = await resend.emails.send({
       from: `Shubha Yatra <${FROM}>`,
-      to, subject: `🎫 Booking Confirmed - ${ticketNumber} | Shubha Yatra`, html,
+      to,
+      subject: `🎫 Booking Confirmed - ${ticketNumber} | Shubha Yatra`,
+      html,
+      attachments,
     });
     if (error) throw new Error(error.message);
     console.log('📧 Ticket email sent to:', to, '| id:', data.id);
