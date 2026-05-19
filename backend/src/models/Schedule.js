@@ -12,7 +12,15 @@ module.exports = (sequelize) => {
     availableSeats: { type: DataTypes.INTEGER, allowNull: false },
     fare: { type: DataTypes.DECIMAL(10, 2), allowNull: false },
     delayMinutes: { type: DataTypes.INTEGER, defaultValue: 0 },
-    notes: { type: DataTypes.TEXT, allowNull: true }
+    notes: { type: DataTypes.TEXT, allowNull: true },
+    currentDriverId: { type: DataTypes.UUID, allowNull: true },
+    journeyStatus: {
+      type: DataTypes.ENUM('not_started', 'in_progress', 'completed'),
+      defaultValue: 'not_started',
+    },
+    driverLocation: { type: DataTypes.JSONB, allowNull: true },
+    journeyStartedAt: { type: DataTypes.DATE, allowNull: true },
+    journeyEndedAt: { type: DataTypes.DATE, allowNull: true },
   });
   return Schedule;
 };

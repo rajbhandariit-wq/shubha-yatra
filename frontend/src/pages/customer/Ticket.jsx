@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { Bus, MapPin, Calendar, Clock, ArrowRight, CheckCircle, Download, Share2, Printer, Home } from 'lucide-react';
+import { Bus, MapPin, Calendar, Clock, ArrowRight, CheckCircle, Download, Share2, Printer, Home, Navigation } from 'lucide-react';
 import { CATEGORY_META } from '../../utils/seatLayout';
 import { QRCodeSVG } from 'qrcode.react';
 import Navbar from '../../components/Navbar';
@@ -255,6 +255,12 @@ const shareTicket = async () => {
           <button onClick={() => setShowShareModal(true)} className="btn-outline flex items-center gap-2">
             <Share2 className="h-4 w-4" /> Share
             </button>
+          {schedule?.id && (
+            <Link to={`/track/${schedule.id}`} target="_blank"
+              className="flex items-center gap-2 text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+              <Navigation className="h-4 w-4" /> Live Track
+            </Link>
+          )}
           <Link to="/my-bookings" className="btn-secondary flex items-center gap-2 text-sm"><Bus className="h-4 w-4" /> My Bookings</Link>
           <Link to="/" className="btn-primary flex items-center gap-2 text-sm"><Home className="h-4 w-4" /> Home</Link>
         </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { ArrowRight, ArrowLeftRight, Bus, Clock, MapPin, Wifi, Wind, Zap, Star, Filter, Search, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ArrowLeftRight, Bus, Clock, MapPin, Wifi, Wind, Zap, Star, Filter, Search, AlertCircle, ChevronLeft, ChevronRight, Navigation } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import { customerAPI } from '../../services/api';
@@ -142,6 +142,12 @@ export default function SearchResults() {
             <div className="flex items-center gap-1 text-yellow-500 text-sm">
               {[1, 2, 3, 4, 5].map(n => <Star key={n} className={`h-4 w-4 ${n <= 4 ? 'fill-yellow-400' : ''}`} />)}
             </div>
+            {schedule.journeyStatus === 'in_progress' && (
+              <Link to={`/track/${schedule.id}`} target="_blank"
+                className="flex items-center gap-1.5 text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium">
+                <Navigation className="h-4 w-4" /> Live Track
+              </Link>
+            )}
             <button onClick={() => {
               const navState = { schedule };
               if (isRoundTrip && activeTab === 'outbound') {

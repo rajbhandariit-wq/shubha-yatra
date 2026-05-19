@@ -53,6 +53,8 @@ import RefundPolicy from './pages/legal/RefundPolicy';
 import ExploreLandmark from './pages/explore/ExploreLandmark';
 import CustomerDashboard from './pages/customer/Dashboard';
 import CustomerNotifications from './pages/customer/Notifications';
+import DriverDashboard from './pages/driver/DriverDashboard';
+import LiveTrack from './pages/tracking/LiveTrack';
 
 
 
@@ -104,7 +106,7 @@ function AppRoutes() {
     <BackButtonHandler />
     <Routes>
       <Route path="/" element={<Home />} />
-      <Route path="/login" element={user ? <Navigate to={user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/'} /> : <Login />} />
+      <Route path="/login" element={user ? <Navigate to={user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : user.role === 'driver' ? '/driver' : '/'} /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
       <Route path="/search" element={<SearchResults />} />
       <Route path="/select-seats/:scheduleId" element={<SeatSelection />} />
@@ -118,6 +120,10 @@ function AppRoutes() {
       <Route path="/my-bookings" element={<ProtectedRoute roles={['customer']}><MyBookings /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute roles={['customer']}><CustomerDashboard /></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute roles={['customer']}><CustomerNotifications /></ProtectedRoute>} />
+      <Route path="/track/:scheduleId" element={<LiveTrack />} />
+
+      {/* Driver Routes */}
+      <Route path="/driver" element={<ProtectedRoute roles={['driver']}><DriverDashboard /></ProtectedRoute>} />
 
       {/* Provider Routes */}
       <Route path="/provider" element={<ProtectedRoute roles={['provider']}><ProviderDashboard /></ProtectedRoute>} />

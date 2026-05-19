@@ -128,6 +128,20 @@ export const billingAPI = {
   updateSettings:      (d)         => api.put('/admin/billing/settings', d),
 };
 
+// Driver
+export const driverAPI = {
+  getSchedules:     ()         => api.get('/driver/schedules'),
+  getMySchedule:    ()         => api.get('/driver/my-schedule'),
+  claimSchedule:    (id)       => api.post(`/driver/schedules/${id}/claim`),
+  takeoverSchedule: (id)       => api.post(`/driver/schedules/${id}/takeover`),
+  startJourney:     (id)       => api.post(`/driver/schedules/${id}/start`),
+  updateLocation:   (id, data) => api.post(`/driver/schedules/${id}/location`, data),
+  endJourney:       (id)       => api.post(`/driver/schedules/${id}/end`),
+};
+
+// Public tracking (no auth)
+export const getPublicTracking = (scheduleId) => api.get(`/track/${scheduleId}`);
+
 // In-App Notifications
 export const notificationAPI = {
   getAll:      () => api.get('/notifications'),

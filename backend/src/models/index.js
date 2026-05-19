@@ -39,6 +39,10 @@ User.hasMany(Notification, { foreignKey: 'senderId', as: 'notifications' });
 User.hasMany(InAppNotification, { foreignKey: 'userId', as: 'inAppNotifications' });
 InAppNotification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
+// Driver → Schedule (current driver)
+User.hasMany(Schedule, { foreignKey: 'currentDriverId', as: 'drivenSchedules' });
+Schedule.belongsTo(User, { foreignKey: 'currentDriverId', as: 'driver' });
+
 // ── Billing associations ─────────────────────────────────────────────────────
 User.hasOne(OperatorBalance,  { foreignKey: 'providerId', as: 'operatorBalance' });
 OperatorBalance.belongsTo(User, { foreignKey: 'providerId', as: 'provider' });
