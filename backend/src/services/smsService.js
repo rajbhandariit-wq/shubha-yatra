@@ -20,14 +20,17 @@ const normalizePhone = (phone) => {
 
 const sendViaSparrow = async (to, message) => {
   if (!SPARROW_TOKEN) throw new Error('SPARROW_SMS_TOKEN not set in .env');
+  // SparrowSMS expects number without leading '+' e.g. 9779841234567
+  const toClean = to.replace(/^\+/, '');
   const res = await fetch('https://api.sparrowsms.com/v2/sms/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: SPARROW_TOKEN, from: SPARROW_FROM, to, text: message }),
+    body: JSON.stringify({ token: SPARROW_TOKEN, from: SPARROW_FROM, to: toClean, text: message }),
   });
   const data = await res.json();
+  console.log('📱 SparrowSMS response:', JSON.stringify(data));
   if (data.response_code !== 200) throw new Error(data.message || 'Sparrow SMS API error');
-  return { success: true, provider: 'sparrow' };
+  return { success: true, provider: 'sparrow', credits: data.credits_remaining };
 };
 
 const sendViaTextBelt = async (to, message) => {
