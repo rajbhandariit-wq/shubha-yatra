@@ -1,23 +1,40 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Ticket, Heart, User } from 'lucide-react';
+import { Home, Ticket, Heart, User, Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-
-const NAV_ITEMS = [
-  { label: 'Discover',    icon: Home,   to: '/',                        match: '/' },
-  { label: 'My Bookings', icon: Ticket, to: '/my-bookings',             match: '/my-bookings' },
-  { label: 'Favourites',  icon: Heart,  to: '/dashboard?tab=favourites', match: '/dashboard' },
-  { label: 'Profile',     icon: User,   to: '/dashboard',               match: '/dashboard' },
-];
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { notificationAPI } from '../services/api';
 
 export default function BottomNav() {
   const { user } = useAuth();
   const { pathname, search } = useLocation();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const intervalRef = useRef(null);
+
+  const fetchUnread = useCallback(async () => {
+    if (!user || user.role !== 'customer') return;
+    try {
+      const res = await notificationAPI.getAll();
+      setUnreadCount(res.data.unreadCount);
+    } catch { /* ignore */ }
+  }, [user]);
+
+  useEffect(() => {
+    fetchUnread();
+    intervalRef.current = setInterval(fetchUnread, 30000);
+    return () => clearInterval(intervalRef.current);
+  }, [fetchUnread]);
+
+  // Reset badge when user navigates to notifications page
+  useEffect(() => {
+    if (pathname === '/notifications') setUnreadCount(0);
+  }, [pathname]);
 
   if (user && user.role !== 'customer') return null;
   if (pathname.startsWith('/provider') || pathname.startsWith('/admin')) return null;
 
   const isFavouritesActive = pathname === '/dashboard' && search.includes('tab=favourites');
   const isProfileActive    = pathname === '/dashboard' && !search.includes('tab=favourites');
+  const isNotifActive      = pathname === '/notifications';
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] z-50">
@@ -34,7 +51,7 @@ export default function BottomNav() {
         <Link to="/my-bookings"
           className={`flex flex-col items-center gap-1 flex-1 py-2 transition-colors ${pathname === '/my-bookings' ? 'text-primary-600' : 'text-gray-400'}`}>
           <Ticket className="h-5 w-5" strokeWidth={pathname === '/my-bookings' ? 2.5 : 2} />
-          <span className="text-[10px] font-medium">My Bookings</span>
+          <span className="text-[10px] font-medium">Bookings</span>
         </Link>
 
         {/* Favourites */}
@@ -42,6 +59,20 @@ export default function BottomNav() {
           className={`flex flex-col items-center gap-1 flex-1 py-2 transition-colors ${isFavouritesActive ? 'text-red-500' : 'text-gray-400'}`}>
           <Heart className={`h-5 w-5 ${isFavouritesActive ? 'fill-red-500' : ''}`} strokeWidth={isFavouritesActive ? 2.5 : 2} />
           <span className="text-[10px] font-medium">Favourites</span>
+        </Link>
+
+        {/* Notifications */}
+        <Link to="/notifications"
+          className={`relative flex flex-col items-center gap-1 flex-1 py-2 transition-colors ${isNotifActive ? 'text-nepal-blue' : 'text-gray-400'}`}>
+          <div className="relative">
+            <Bell className="h-5 w-5" strokeWidth={isNotifActive ? 2.5 : 2} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-nepal-red text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1 leading-none">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-medium">Alerts</span>
         </Link>
 
         {/* Profile */}

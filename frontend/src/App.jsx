@@ -52,6 +52,7 @@ import TermsOfService from './pages/legal/TermsOfService';
 import RefundPolicy from './pages/legal/RefundPolicy';
 import ExploreLandmark from './pages/explore/ExploreLandmark';
 import CustomerDashboard from './pages/customer/Dashboard';
+import CustomerNotifications from './pages/customer/Notifications';
 
 
 
@@ -116,6 +117,7 @@ function AppRoutes() {
       <Route path="/payment/failed" element={<PaymentFailed />} />
       <Route path="/my-bookings" element={<ProtectedRoute roles={['customer']}><MyBookings /></ProtectedRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute roles={['customer']}><CustomerDashboard /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute roles={['customer']}><CustomerNotifications /></ProtectedRoute>} />
 
       {/* Provider Routes */}
       <Route path="/provider" element={<ProtectedRoute roles={['provider']}><ProviderDashboard /></ProtectedRoute>} />
