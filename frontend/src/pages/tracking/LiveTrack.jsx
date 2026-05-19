@@ -113,7 +113,7 @@ export default function LiveTrack() {
         </Link>
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-gray-800 text-sm truncate">
-            {schedule?.route?.origin} → {schedule?.route?.destination}
+            {schedule?.route?.source} → {schedule?.route?.destination}
           </p>
           <p className="text-xs text-gray-400">{schedule?.bus?.name} · {schedule?.bus?.registrationNumber}</p>
         </div>
@@ -139,7 +139,7 @@ export default function LiveTrack() {
                 <Popup>
                   <div className="text-sm">
                     <strong>{schedule.bus?.name}</strong><br />
-                    {schedule.route?.origin} → {schedule.route?.destination}<br />
+                    {schedule.route?.source} → {schedule.route?.destination}<br />
                     {loc.speed != null && `Speed: ${Math.round((loc.speed || 0) * 3.6)} km/h`}
                   </div>
                 </Popup>

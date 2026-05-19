@@ -177,7 +177,7 @@ export default function DriverDashboard() {
               </span>
             </div>
             <div className="px-4 py-4 space-y-2">
-              <p className="font-semibold text-gray-800">{mySchedule.route?.origin} → {mySchedule.route?.destination}</p>
+              <p className="font-semibold text-gray-800">{mySchedule.route?.source} → {mySchedule.route?.destination}</p>
               <p className="text-sm text-gray-500">{mySchedule.bus?.name} · {mySchedule.bus?.registrationNumber}</p>
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Clock size={14} /> {mySchedule.departureTime} → {mySchedule.arrivalTime}
@@ -241,7 +241,7 @@ export default function DriverDashboard() {
                   <div key={s.id} className="px-4 py-3 flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm text-gray-800 truncate">
-                        {s.route?.origin} → {s.route?.destination}
+                        {s.route?.source} → {s.route?.destination}
                       </p>
                       <p className="text-xs text-gray-400">{s.departureTime} · {s.bus?.registrationNumber}</p>
                     </div>

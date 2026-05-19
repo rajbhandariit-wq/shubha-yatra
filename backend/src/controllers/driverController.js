@@ -13,7 +13,7 @@ exports.getTodaySchedules = async (req, res) => {
       },
       include: [
         { model: Bus,  as: 'bus',   attributes: ['id', 'name', 'registrationNumber', 'type'] },
-        { model: Route, as: 'route', attributes: ['id', 'name', 'origin', 'destination'] },
+        { model: Route, as: 'route', attributes: ['id', 'source', 'destination'] },
         { model: User,  as: 'driver', attributes: ['id', 'name', 'phoneNumber'], required: false },
       ],
       order: [['departureTime', 'ASC']],
@@ -120,7 +120,7 @@ exports.getMyActiveSchedule = async (req, res) => {
       },
       include: [
         { model: Bus,   as: 'bus',   attributes: ['id', 'name', 'registrationNumber', 'type'] },
-        { model: Route, as: 'route', attributes: ['id', 'name', 'origin', 'destination'] },
+        { model: Route, as: 'route', attributes: ['id', 'source', 'destination'] },
       ],
     });
     res.json(schedule || null);
@@ -138,7 +138,7 @@ exports.getPublicTracking = async (req, res) => {
                    'journeyStatus', 'driverLocation', 'journeyStartedAt', 'delayMinutes'],
       include: [
         { model: Bus,   as: 'bus',   attributes: ['name', 'registrationNumber', 'type'] },
-        { model: Route, as: 'route', attributes: ['name', 'origin', 'destination'] },
+        { model: Route, as: 'route', attributes: ['source', 'destination'] },
         { model: User,  as: 'driver', attributes: ['name'], required: false },
       ],
     });
