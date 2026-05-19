@@ -22,7 +22,7 @@ export default function Login() {
     try {
       const user = await login(identifier.trim(), password);
       toast.success(`Welcome back, ${user.name.split(' ')[0]}! 🙏`);
-      const from = location.state?.from || (user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/');
+      const from = location.state?.from || (user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : user.role === 'driver' ? '/driver' : '/');
       navigate(from, { replace: true });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
@@ -35,7 +35,7 @@ export default function Login() {
     try {
       const user = await login(id, pwd);
       toast.success(`Logged in as ${user.role}!`);
-      navigate(user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : '/');
+      navigate(user.role === 'provider' ? '/provider' : user.role === 'admin' ? '/admin' : user.role === 'driver' ? '/driver' : '/');
     } catch { toast.error('Demo login failed'); }
     finally { setLoading(false); }
   };
