@@ -6,7 +6,7 @@ module.exports = (sequelize) => {
     providerId: { type: DataTypes.UUID, allowNull: false },
     name: { type: DataTypes.STRING, allowNull: false },
     registrationNumber: { type: DataTypes.STRING, allowNull: false, unique: true },
-    type: { type: DataTypes.ENUM('AC', 'Non-AC', 'Sleeper', 'Deluxe', 'Super-Deluxe'), defaultValue: 'Non-AC' },
+    type: { type: DataTypes.STRING, defaultValue: 'Non-AC' },
     totalSeats: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 40 },
     seatLayout: {
       type: DataTypes.JSONB,

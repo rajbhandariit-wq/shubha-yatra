@@ -6,8 +6,10 @@ import SeatMap from '../../components/SeatMap';
 import { BUS_CATEGORIES, generateSeatLayout } from '../../utils/seatLayout';
 import toast from 'react-hot-toast';
 
+const BUS_TYPES = ['AC', 'Non-AC', 'Sleeper', 'Deluxe', 'Super-Deluxe', 'Others'];
+
 const EMPTY = {
-  name: '', registrationNumber: '', busCategory: 'standard', type: 'Non-AC', amenities: [],
+  name: '', registrationNumber: '', busCategory: 'standard', type: 'Non-AC', customType: 'Tata Sumo', amenities: [],
   leftCols: 2, rightCols: 2, regularRows: 10, backRowSeats: 0, seatLayout: null,
 };
 const ALL_AMENITIES = ['WiFi', 'AC', 'USB Charging', 'Water Bottle', 'Blanket', 'Pillow', 'Sleeper Berth', 'Reclining Seats', 'Fan', 'TV'];
@@ -70,11 +72,13 @@ export default function ProviderBuses() {
     const rightCols   = sl?.rightCols   ?? 2;
     const regularRows = sl?.regularRows ?? 10;
     const backRowSeats = sl?.backRowSeats ?? 0;
+    const isCustomType = b.type && !['AC', 'Non-AC', 'Sleeper', 'Deluxe', 'Super-Deluxe'].includes(b.type);
     const f = {
       name: b.name,
       registrationNumber: b.registrationNumber,
       busCategory,
-      type: b.type,
+      type: isCustomType ? 'Others' : (b.type || 'Non-AC'),
+      customType: isCustomType ? b.type : 'Tata Sumo',
       amenities: b.amenities || [],
       leftCols, rightCols, regularRows, backRowSeats,
       seatLayout: sl?.seats?.length > 0 ? sl : rebuild({ busCategory, leftCols, rightCols, regularRows, backRowSeats }),
@@ -102,10 +106,13 @@ export default function ProviderBuses() {
     setSaving(true);
     try {
       const totalSeats = form.seatLayout?.totalSeats || form.seatLayout?.seats?.length || 0;
+      const resolvedType = form.type === 'Others'
+        ? (form.customType.trim() || 'Tata Sumo')
+        : form.type;
       const payload = {
         name: form.name,
         registrationNumber: form.registrationNumber,
-        type: form.type,
+        type: resolvedType,
         amenities: form.amenities,
         totalSeats,
         seatLayout: form.seatLayout,
@@ -264,6 +271,26 @@ export default function ProviderBuses() {
                   <label className="label">Registration Number *</label>
                   <input value={form.registrationNumber} onChange={e => setForm(f => ({ ...f, registrationNumber: e.target.value }))}
                     className="input-field" placeholder="BA 1 KHA 1234" required />
+                </div>
+                <div>
+                  <label className="label">Bus Type *</label>
+                  <div className="flex flex-wrap gap-2">
+                    {BUS_TYPES.map(t => (
+                      <button key={t} type="button"
+                        onClick={() => setForm(f => ({ ...f, type: t }))}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-all ${form.type === t ? 'bg-primary-500 text-white border-primary-500' : 'bg-gray-50 text-gray-600 border-gray-200 hover:border-primary-300'}`}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  {form.type === 'Others' && (
+                    <input
+                      value={form.customType}
+                      onChange={e => setForm(f => ({ ...f, customType: e.target.value }))}
+                      className="input-field mt-3"
+                      placeholder="e.g. Tata Sumo, Hiace, Bolero..."
+                    />
+                  )}
                 </div>
                 <div>
                   <label className="label">Amenities</label>
