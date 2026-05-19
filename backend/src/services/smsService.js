@@ -33,7 +33,7 @@ const sendViaSparrow = async (to, message) => {
   console.log('📱 SparrowSMS raw response:', raw);
   let data;
   try { data = JSON.parse(raw); } catch { throw new Error(`SparrowSMS non-JSON response: ${raw}`); }
-  if (data.response_code !== 200) throw new Error(`SparrowSMS error ${data.response_code}: ${data.message}`);
+  if (data.response_code !== 200) throw new Error(`SparrowSMS error ${data.response_code}: ${data.message || data.response}`);
   console.log(`📱 SparrowSMS sent ✅ credits remaining: ${data.credits_remaining}`);
   return { success: true, provider: 'sparrow', credits: data.credits_remaining };
 };
