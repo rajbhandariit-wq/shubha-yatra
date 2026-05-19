@@ -22,14 +22,19 @@ const sendViaSparrow = async (to, message) => {
   if (!SPARROW_TOKEN) throw new Error('SPARROW_SMS_TOKEN not set in .env');
   // SparrowSMS expects number without leading '+' e.g. 9779841234567
   const toClean = to.replace(/^\+/, '');
+  const payload = { token: SPARROW_TOKEN, from: SPARROW_FROM, to: toClean, text: message };
+  console.log('📱 SparrowSMS request → to:', toClean, '| from:', SPARROW_FROM);
   const res = await fetch('https://api.sparrowsms.com/v2/sms/', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token: SPARROW_TOKEN, from: SPARROW_FROM, to: toClean, text: message }),
+    body: JSON.stringify(payload),
   });
-  const data = await res.json();
-  console.log('📱 SparrowSMS response:', JSON.stringify(data));
-  if (data.response_code !== 200) throw new Error(data.message || 'Sparrow SMS API error');
+  const raw = await res.text();
+  console.log('📱 SparrowSMS raw response:', raw);
+  let data;
+  try { data = JSON.parse(raw); } catch { throw new Error(`SparrowSMS non-JSON response: ${raw}`); }
+  if (data.response_code !== 200) throw new Error(`SparrowSMS error ${data.response_code}: ${data.message}`);
+  console.log(`📱 SparrowSMS sent ✅ credits remaining: ${data.credits_remaining}`);
   return { success: true, provider: 'sparrow', credits: data.credits_remaining };
 };
 
